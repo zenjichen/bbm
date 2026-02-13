@@ -1,0 +1,10 @@
+[
+    {
+        "src": "package.json",
+        "use": "@vercel/node"
+    },
+    {
+        "src": "scripts/bot.js",
+        "use": "@vercel/node"
+    }
+]
