@@ -1,21 +1,37 @@
 "use client";
 
 import React from "react";
-import { Track } from "@/context/PlayerContext";
-import { Play, Pause } from "lucide-react";
-import { usePlayer } from "@/context/PlayerContext";
+import { Track, usePlayer } from "@/context/PlayerContext";
 
-interface TrackItemProps {
-    track: Track;
-    playlistContext: Track[];
+// Inline SVG icons
+const PlayIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z" />
+    </svg>
+);
+
+const PauseIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+    </svg>
+);
+
+function formatDuration(seconds?: number): string {
+    if (!seconds || isNaN(seconds)) return "--:--";
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    return `${min}:${sec < 10 ? '0' + sec : sec}`;
 }
 
-function TrackItem({ track, playlistContext }: TrackItemProps) {
+function TrackItem({ track, index, playlistContext }: {
+    track: Track;
+    index: number;
+    playlistContext: Track[];
+}) {
     const { playTrack, currentTrack, isPlaying, setPlaylist, togglePlay } = usePlayer();
-
     const isCurrent = currentTrack?.id === track.id;
 
-    const handlePlay = () => {
+    const handleClick = () => {
         if (isCurrent) {
             togglePlay();
         } else {
@@ -24,50 +40,75 @@ function TrackItem({ track, playlistContext }: TrackItemProps) {
         }
     };
 
-    const formatDuration = (seconds?: number) => {
-        if (!seconds) return "--:--";
-        const min = Math.floor(seconds / 60);
-        const sec = seconds % 60;
-        return `${min}:${sec < 10 ? '0' + sec : sec}`;
-    };
-
     return (
         <div
-            onClick={handlePlay}
-            className={`flex items-center gap-4 p-3 rounded-lg hover:bg-zinc-800 transition cursor-pointer group ${isCurrent ? 'bg-zinc-800/50' : ''}`}
+            onClick={handleClick}
+            className={`track-item ${isCurrent ? 'active' : ''}`}
+            id={`track-${track.id}`}
         >
-            <div className="w-10 h-10 bg-zinc-700/50 rounded-md flex items-center justify-center shrink-0 border border-zinc-700">
+            {/* Track number / play icon */}
+            <span className="track-number">{index + 1}</span>
+            <span className="track-play-icon" style={{ color: isCurrent ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                {isCurrent && isPlaying ? <PauseIcon /> : <PlayIcon />}
+            </span>
+
+            {/* Cover */}
+            <div className="track-cover">
                 {isCurrent && isPlaying ? (
-                    <Pause size={16} className="text-cyan-400" />
+                    <div className="now-playing-bars">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
                 ) : (
-                    <Play size={16} className="text-zinc-400 group-hover:text-cyan-400 transition" />
+                    <span style={{ fontSize: 16 }}>🎵</span>
                 )}
             </div>
-            <div className="min-w-0 flex-1">
-                <h4 className={`font-medium truncate ${isCurrent ? 'text-cyan-400' : 'text-zinc-200'}`}>
-                    {track.title || "Unknown Title"}
-                </h4>
-                <p className="text-sm text-zinc-500 truncate">
-                    {track.performer || "Unknown Artist"}
-                </p>
+
+            {/* Info */}
+            <div className="track-info">
+                <div className="track-title">{track.title || "Untitled"}</div>
+                <div className="track-artist">{track.performer || "Unknown Artist"}</div>
             </div>
-            <div className="text-xs text-zinc-600 font-mono">
-                {formatDuration(track.duration)}
-            </div>
+
+            {/* Duration */}
+            <div className="track-duration">{formatDuration(track.duration)}</div>
         </div>
     );
 }
 
 export default function TrackList({ tracks }: { tracks: Track[] }) {
     if (tracks.length === 0) {
-        return <div className="text-center text-zinc-500 mt-8">No tracks found</div>;
+        return (
+            <div className="empty-state">
+                <div className="empty-state-icon">🎶</div>
+                <div className="empty-state-title">No tracks found</div>
+                <div className="empty-state-desc">
+                    Try a different search or run the fetch script to scan your Telegram channel.
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-1">
-            {tracks.map(track => (
-                <TrackItem key={track.id} track={track} playlistContext={tracks} />
-            ))}
+        <div>
+            {/* Table header */}
+            <div className="track-table-header">
+                <span style={{ width: 24, textAlign: 'center' }}>#</span>
+                <span style={{ width: 44 }}></span>
+                <span style={{ flex: 1 }}>Title</span>
+                <span>Duration</span>
+            </div>
+
+            {/* Track list */}
+            <div className="track-list stagger-enter">
+                {tracks.map((track, i) => (
+                    <TrackItem
+                        key={track.id}
+                        track={track}
+                        index={i}
+                        playlistContext={tracks}
+                    />
+                ))}
+            </div>
         </div>
     );
 }

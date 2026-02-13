@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    images: { unoptimized: true },
     reactStrictMode: true,
-    webpack: (config) => {
-        config.externals.push('better-sqlite3');
-        return config;
-    },
+    // No 'output: export' — we need server-side API routes for streaming
 };
 
 module.exports = nextConfig;

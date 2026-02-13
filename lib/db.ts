@@ -1,29 +1,7 @@
-import Database from 'better-sqlite3';
+import fs from 'fs';
 import path from 'path';
 
-const dbPath = path.resolve(process.cwd(), 'music.db');
-const db = new Database(dbPath);
-
-// Initialize DB schema
-db.exec(`
-    CREATE TABLE IF NOT EXISTS tracks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        file_id TEXT NOT NULL,
-        file_unique_id TEXT NOT NULL UNIQUE,
-        title TEXT,
-        performer TEXT,
-        duration INTEGER,
-        file_size INTEGER,
-        mime_type TEXT,
-        topic_id INTEGER, -- message_thread_id
-        topic_name TEXT, -- Optional if we can infer or store
-        message_id INTEGER,
-        chat_id INTEGER,
-        date INTEGER
-    );
-`);
-
-export default db;
+const dataPath = path.resolve(process.cwd(), 'data/tracks.json');
 
 export interface Track {
     id: number;
@@ -32,7 +10,60 @@ export interface Track {
     title: string | null;
     performer: string | null;
     duration: number;
+    file_size: number;
+    mime_type: string;
     topic_id: number | null;
     message_id?: number;
     chat_id?: number;
+    date: number;
+}
+
+// Function to read tracks
+export function getTracks(query?: string, topicId?: number, limit = 50): Track[] {
+    try {
+        if (!fs.existsSync(dataPath)) return [];
+
+        const raw = fs.readFileSync(dataPath, 'utf8');
+        let tracks: Track[] = JSON.parse(raw);
+
+        // Sort by date desc
+        tracks.sort((a, b) => b.date - a.date);
+
+        if (topicId) {
+            tracks = tracks.filter(t => t.topic_id === topicId);
+        }
+
+        if (query) {
+            const q = query.toLowerCase();
+            tracks = tracks.filter(t =>
+                (t.title && t.title.toLowerCase().includes(q)) ||
+                (t.performer && t.performer.toLowerCase().includes(q))
+            );
+        }
+
+        return tracks.slice(0, limit);
+    } catch (error) {
+        console.error("Error reading tracks.json", error);
+        return [];
+    }
+}
+
+// Function to get distinct topics
+export function getTopics(): { id: number, name: string }[] {
+    try {
+        if (!fs.existsSync(dataPath)) return [];
+        const raw = fs.readFileSync(dataPath, 'utf8');
+        const tracks: Track[] = JSON.parse(raw);
+
+        const topicsMap = new Map<number, string>();
+        tracks.forEach(t => {
+            if (t.topic_id) {
+                topicsMap.set(t.topic_id, t.topic_id.toString()); // Could store name if available
+            }
+        });
+
+        return Array.from(topicsMap.entries()).map(([id, name]) => ({ id, name: `Topic ${id}` }));
+    } catch (error) {
+        return [];
+    }
 }

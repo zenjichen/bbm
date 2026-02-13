@@ -1,34 +1,32 @@
 {
-  "name": "my-music-stream",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "next": "14.1.0",
-    "react": "^18",
-    "react-dom": "^18",
-    "better-sqlite3": "^9.4.0",
-    "telegraf": "^4.16.3",
-    "axios": "^1.6.7",
-    "lucide-react": "^0.330.0",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.2.1"
-  },
-  "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "@types/better-sqlite3": "^7.6.9",
-    "autoprefixer": "^10.0.1",
-    "postcss": "^8",
-    "tailwindcss": "^3.3.0",
-    "eslint": "^8",
-    "eslint-config-next": "14.1.0",
-    "typescript": "^5"
-  }
+    "name": "bbm-music",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint",
+        "fetch": "node scripts/fetch-tracks.js",
+        "fetch:from": "node scripts/fetch-tracks.js --from",
+        "bot": "node scripts/bot.js"
+    },
+    "dependencies": {
+        "next": "14.1.0",
+        "react": "^18",
+        "react-dom": "^18",
+        "axios": "^1.6.7",
+        "dotenv": "^16.4.1"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@types/react": "^18",
+        "@types/react-dom": "^18",
+        "autoprefixer": "^10.0.1",
+        "postcss": "^8",
+        "tailwindcss": "^3.3.0",
+        "eslint": "^8",
+        "eslint-config-next": "14.1.0",
+        "typescript": "^5"
+    }
 }

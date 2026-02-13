@@ -1,27 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { Folder } from "lucide-react";
 
 interface TopicGridProps {
-    topics: { id: number, name: string }[];
+    topics: { id: number; name: string; trackCount?: number }[];
 }
 
+const TOPIC_EMOJIS = ['🎵', '🎸', '🎹', '🎧', '🎤', '🎺', '🎻', '🥁', '🪗', '🎼'];
+
 export default function TopicGrid({ topics }: TopicGridProps) {
+    if (topics.length === 0) return null;
+
     return (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {topics.map(topic => (
+        <div className="playlist-grid stagger-enter">
+            {topics.map((topic, index) => (
                 <Link
                     key={topic.id}
                     href={`/?topic=${topic.id}`}
-                    className="group bg-zinc-900 border border-zinc-800 rounded-lg p-6 flex flex-col items-center justify-center gap-4 hover:border-cyan-500 hover:bg-zinc-800 transition shadow-sm hover:shadow-cyan-500/20"
+                    className="playlist-card"
+                    id={`playlist-${topic.id}`}
                 >
-                    <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center group-hover:bg-zinc-700 transition">
-                        <Folder className="w-8 h-8 text-cyan-400" />
+                    <div className="playlist-cover">
+                        {TOPIC_EMOJIS[index % TOPIC_EMOJIS.length]}
                     </div>
-                    <h3 className="text-lg font-semibold text-center text-zinc-100 group-hover:text-cyan-400 transition">
-                        {topic.name || `Topic ${topic.id}`}
-                    </h3>
+                    <div className="playlist-info">
+                        <div className="playlist-name">{topic.name}</div>
+                        {topic.trackCount !== undefined && (
+                            <div className="playlist-count">{topic.trackCount} tracks</div>
+                        )}
+                    </div>
                 </Link>
             ))}
         </div>

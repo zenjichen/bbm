@@ -2,7 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Search } from 'lucide-react';
+
+const SearchIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+);
 
 export default function SearchInput({ initialQuery = '' }: { initialQuery?: string }) {
     const router = useRouter();
@@ -11,22 +17,25 @@ export default function SearchInput({ initialQuery = '' }: { initialQuery?: stri
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         if (query.trim()) {
-            router.push(`/?q=${encodeURIComponent(query)}`);
+            router.push(`/?q=${encodeURIComponent(query.trim())}`);
         } else {
             router.push('/');
         }
     };
 
     return (
-        <form onSubmit={handleSearch} className="mb-6 relative w-full max-w-md mx-auto">
+        <form onSubmit={handleSearch} className="search-container" id="search-form">
             <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search tracks..."
-                className="w-full pl-10 pr-4 py-2 bg-zinc-900 border border-zinc-800 rounded-full focus:outline-none focus:border-cyan-500 transition-colors text-zinc-200"
+                placeholder="Search tracks, artists..."
+                className="search-input"
+                id="search-input"
             />
-            <Search className="absolute left-3 top-2.5 text-zinc-500 w-5 h-5" />
+            <div className="search-icon">
+                <SearchIcon />
+            </div>
         </form>
     );
 }
