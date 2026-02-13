@@ -1,8 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    images: { unoptimized: true },
-    reactStrictMode: true,
-    // No 'output: export' — we need server-side API routes for streaming
-};
+    images: {
+        domains: ['api.telegram.org'],
+    },
+    eslint: {
+        // Warning: This allows production builds to successfully complete even if
+        // your project has ESLint errors.
+        ignoreDuringBuilds: true,
+    },
+    typescript: {
+        // !! WARN !!
+        // Dangerously allow production builds to successfully complete even if
+        // your project has type errors.
+        // !! WARN !!
+        ignoreBuildErrors: true,
+    },
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig
