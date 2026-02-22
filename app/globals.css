@@ -745,10 +745,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   flex: 1;
   max-width: 580px;
-  padding-top: 8px;
 }
 
 .player-inner {
@@ -1737,11 +1737,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  padding-top: 10px;
 }
 
 .player-right {

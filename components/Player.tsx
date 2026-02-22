@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useCallback, useState, useEffect, useMemo } from "react";
+import React, { useRef, useCallback, useState, useEffect } from "react";
 import { usePlayer } from "@/context/PlayerContext";
 
 // ── Icons ─────────────────────────────────────────────────────────
@@ -23,36 +23,6 @@ function trackThumb(fileId: string): string {
     return `https://picsum.photos/seed/${seed}/200/200`;
 }
 
-// ── CSS Waveform (no Web Audio API needed — compatible with Google Drive CORS) ──
-// Note: Web Audio API requires crossOrigin='anonymous' which breaks Google Drive streams.
-// CSS animation gives beautiful visual without any CORS requirements.
-function CSSWaveform({ isPlaying }: { isPlaying: boolean }) {
-    const bars = useMemo(() => Array.from({ length: 48 }, (_, i) => {
-        const x = i / 48;
-        const h = Math.max(0.1,
-            Math.exp(-Math.pow((x - 0.3) * 3, 2)) * 0.7 +
-            Math.exp(-Math.pow((x - 0.7) * 4, 2)) * 0.5 +
-            Math.sin(i * 2.1) * 0.15 + Math.cos(i * 3.7) * 0.1
-        );
-        return {
-            h: Math.max(4, Math.min(34, h * 36)),
-            delay: (i * 43 + i * i * 7) % 900,
-            dur: 380 + (i * 97) % 400,
-        };
-    }), []);
-
-    return (
-        <div className={`css-waveform ${isPlaying ? 'wf-playing' : ''}`}>
-            {bars.map((b, i) => (
-                <div key={i} className="wf-bar" style={{
-                    '--bar-h': `${b.h}px`,
-                    '--delay': `${b.delay}ms`,
-                    '--dur': `${b.dur}ms`,
-                } as React.CSSProperties} />
-            ))}
-        </div>
-    );
-}
 
 // ── Drag Progress Bar ──────────────────────────────────────────
 function ProgressBar({ progress, seekTo, currentTime, totalDuration }: {
@@ -175,9 +145,8 @@ export default function Player() {
                     </div>
                 </div>
 
-                {/* Center: waveform + controls */}
+                {/* Center: controls only */}
                 <div className="player-center">
-                    <CSSWaveform isPlaying={isPlaying} />
                     <div className="player-buttons">
                         <button className={`pl-btn ${isShuffle ? 'pl-btn-on' : ''}`} onClick={toggleShuffle} title="Shuffle"><ShuffleIcon /></button>
                         <button className="pl-btn" onClick={prevTrack} title="Prev"><PrevIcon /></button>
