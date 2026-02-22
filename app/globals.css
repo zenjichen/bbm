@@ -562,6 +562,45 @@ body {
   display: block;
 }
 
+/* ── Scrollbars ── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.2);
+  border-radius: 10px;
+  transition: background 0.3s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.4);
+}
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.navbar {
+  height: 65px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 .track-cover {
   width: 44px;
   height: 44px;
@@ -1415,9 +1454,9 @@ body {
   min-height: calc(100vh - var(--player-h) - 65px);
 }
 
-/* ─── Sidebar ──────────────────────────────────────── */
+/* ─── Sidebar (Spine of the book) ──────────────────────── */
 .sidebar {
-  width: 256px;
+  width: 280px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -1427,10 +1466,10 @@ body {
   height: calc(100vh - var(--player-h) - 65px);
   overflow-y: auto;
   overflow-x: hidden;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.2) 0%, transparent 10%, transparent 90%, rgba(0, 0, 0, 0.1) 100%);
   border-right: 1px solid var(--border-1);
-  padding: 16px 0;
-  scrollbar-width: thin;
-  scrollbar-color: #1e1e4a transparent;
+  padding: 20px 0;
+  z-index: 10;
 }
 
 .sidebar-header {
@@ -1588,13 +1627,27 @@ body {
   animation: spin 0.7s linear infinite;
 }
 
-/* ─── Main Panel ───────────────────────────────────── */
+/* ─── Main Panel (Page of the book) ───────────────────── */
 .main-panel {
   flex: 1;
   min-width: 0;
-  padding: 20px 24px 24px;
+  padding: 30px 40px 40px;
   overflow-y: auto;
   max-height: calc(100vh - var(--player-h) - 65px);
+  background: var(--bg-primary);
+  position: relative;
+  /* Shadow to define the page against the spine */
+  box-shadow: -20px 0 30px -20px rgba(0, 0, 0, 0.5) inset;
+}
+
+.main-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--border-2), transparent);
 }
 
 .panel-header {
