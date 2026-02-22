@@ -96,11 +96,11 @@ export default function TrackList({ tracks }: { tracks: Track[] }) {
     return (
         <div>
             {/* Table header */}
-            <div className="track-table-header">
-                <span style={{ width: 24, textAlign: 'center' }}>#</span>
+            <div className="track-table-header" style={{ padding: '8px 20px' }}>
+                <span style={{ width: 30, textAlign: 'center' }}>#</span>
                 <span style={{ width: 44 }}></span>
-                <span style={{ flex: 1 }}>Title</span>
-                <span>Duration</span>
+                <span style={{ flex: 1, paddingLeft: '8px' }}>TIÊU ĐỀ</span>
+                <span style={{ width: 80, textAlign: 'right' }}>THỜI LƯỢNG</span>
             </div>
 
             {/* Track list */}

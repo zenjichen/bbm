@@ -3,55 +3,62 @@
 import React, { useRef, useCallback, useState, useEffect } from "react";
 import { usePlayer } from "@/context/PlayerContext";
 
-// ── Modern Minimalist Icons ─────────────────────────────────────────
+// ── Modern Minimal SVG Icons ──────────────────────────────────
 const PlayIcon = () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M7 6v12l10-6z" />
-    </svg>
-);
-const PauseIcon = () => (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-    </svg>
-);
-const NextIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-    </svg>
-);
-const PrevIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-    </svg>
-);
-const ShuffleIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
-    </svg>
-);
-const RepeatIcon = ({ one }: { one?: boolean }) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3" />
-        {one && <text x="9" y="15" fontSize="8" fill="currentColor" stroke="none" fontWeight="900">1</text>}
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 4.5V19.5L19 12L7 4.5Z" />
     </svg>
 );
 
-// Aesthetic Volume Icons
-const VolOff = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" />
+const PauseIcon = () => (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 5H10V19H6V5ZM14 5H18V19H14V5Z" />
     </svg>
 );
-const VolLow = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07" />
+
+const NextIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m5 4 10 8-10 8V4Z" /><path d="M19 5v14" />
     </svg>
 );
+
+const PrevIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m19 20-10-8 10-8v16Z" /><path d="M5 19V5" />
+    </svg>
+);
+
+const ShuffleIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" /><path d="m18 2 4 4-4 4" /><path d="M2 6h1.9c1.2 0 2.3.6 3 1.5l3.8 5c.2.3.4.5.7.7" /><path x="18" y="14" d="m18 14 4 4-4 4" /><path d="M15.3 16.5c.8 1 2 1.5 3.3 1.5H22" />
+    </svg>
+);
+
+const RepeatIcon = ({ one }: { one?: boolean }) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m17 2 4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+        {one && <text x="9" y="15" fontSize="10" fontWeight="bold" fill="currentColor">1</text>}
+    </svg>
+);
+
 const VolHigh = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 5 6 9H2v6h4l5 4V5Z" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
     </svg>
 );
+
+const VolLow = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 5 6 9H2v6h4l5 4V5Z" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    </svg>
+);
+
+const VolOff = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 5 6 9H2v6h4l5 4V5Z" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />
+    </svg>
+);
+
 
 function fmt(s: number) {
     if (!s || isNaN(s)) return "0:00";
@@ -148,54 +155,56 @@ export default function Player() {
     const thumbUrl = currentTrack ? trackThumb(currentTrack.file_id) : '';
     useEffect(() => { setImgError(false); }, [currentTrack?.file_id]);
 
-    if (!currentTrack) return null;
-
     return (
-        <div className="player-bar">
-            <div className="player-dynamic-bg" style={{
-                backgroundImage: isPlaying ? `url(${thumbUrl})` : 'none'
-            }} />
+        <div className="player-container">
+            <div className="player-bar">
+                <div className="player-dynamic-bg" style={{
+                    backgroundImage: isPlaying ? `url(${thumbUrl})` : 'none'
+                }} />
 
-            <ProgressBar progress={progress} seekTo={seekTo} currentTime={currentTime} totalDuration={totalDuration} />
+                <ProgressBar progress={progress} seekTo={seekTo} currentTime={currentTime} totalDuration={totalDuration} />
 
-            <div className="player-inner">
-                {/* Left: Info */}
-                <div className="player-left">
-                    <div className={`player-cover ${isPlaying ? 'cover-active' : ''}`}>
-                        {!imgError ? (
-                            <img src={thumbUrl} alt="" onError={() => setImgError(true)}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
-                        ) : <span style={{ fontSize: 28 }}>🎵</span>}
+                <div className="player-inner">
+                    {/* Left: Info */}
+                    <div className="player-left">
+                        <div className={`player-cover ${isPlaying ? 'cover-active' : ''}`}>
+                            {currentTrack && !imgError ? (
+                                <img src={thumbUrl} alt="" onError={() => setImgError(true)}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                            ) : (
+                                <span style={{ fontSize: 28 }}>🎵</span>
+                            )}
+                        </div>
+                        <div className="player-text-premium" onClick={scrollToCurrent} title="Bấm để xem bài hát đang phát">
+                            <div className="player-title-full">{currentTrack?.title || "Sẵn sàng phát nhạc"}</div>
+                            <div className="player-artist-premium">{currentTrack?.performer || "Chọn một bài hát để bắt đầu"}</div>
+                        </div>
                     </div>
-                    <div className="player-text-premium" onClick={scrollToCurrent} title="Bấm để xem bài hát đang phát">
-                        <div className="player-title-full">{currentTrack.title || "Unknown"}</div>
-                        <div className="player-artist-premium">{currentTrack.performer || "Unknown Artist"}</div>
-                    </div>
-                </div>
 
-                {/* Center: Controls */}
-                <div className="player-center">
-                    <div className="player-buttons-premium">
-                        <button className={`pl-btn-framed ${isShuffle ? 'active' : ''}`} onClick={toggleShuffle} title="Shuffle"><ShuffleIcon /></button>
-                        <button className="pl-btn-framed" onClick={prevTrack} title="Prev"><PrevIcon /></button>
-                        <button className="pl-play-main-premium" onClick={togglePlay}>
-                            {isLoading ? <div className="spin-ring" /> : isPlaying ? <PauseIcon /> : <PlayIcon />}
-                        </button>
-                        <button className="pl-btn-framed" onClick={nextTrack} title="Next"><NextIcon /></button>
-                        <button className={`pl-btn-framed ${repeatMode !== 'off' ? 'active' : ''}`} onClick={toggleRepeat}>
-                            <RepeatIcon one={repeatMode === 'one'} />
-                        </button>
+                    {/* Center: Controls */}
+                    <div className="player-center">
+                        <div className="player-buttons-modern">
+                            <button className={`pl-btn-modern ${isShuffle ? 'active' : ''}`} onClick={toggleShuffle} title="Shuffle"><ShuffleIcon /></button>
+                            <button className="pl-btn-modern" onClick={prevTrack} title="Prev"><PrevIcon /></button>
+                            <button className="pl-play-modern" onClick={togglePlay}>
+                                {isLoading ? <div className="spin-ring" /> : isPlaying ? <PauseIcon /> : <PlayIcon />}
+                            </button>
+                            <button className="pl-btn-modern" onClick={nextTrack} title="Next"><NextIcon /></button>
+                            <button className={`pl-btn-modern ${repeatMode !== 'off' ? 'active' : ''}`} onClick={toggleRepeat}>
+                                <RepeatIcon one={repeatMode === 'one'} />
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                {/* Right: Volume */}
-                <div className="player-right">
-                    <div className="vol-wrap-aesthetic">
-                        <button className="vol-btn-aesthetic" onClick={toggleMute}>
-                            {volume === 0 ? <VolOff /> : volume < 50 ? <VolLow /> : <VolHigh />}
-                        </button>
-                        <input type="range" min="0" max="100" value={volume}
-                            onChange={e => setVolume(+e.target.value)} className="vol-slider-aesthetic" />
+                    {/* Right: Volume */}
+                    <div className="player-right">
+                        <div className="vol-wrap-aesthetic">
+                            <button className="pl-btn-modern" onClick={toggleMute}>
+                                {volume === 0 ? <VolOff /> : volume < 50 ? <VolLow /> : <VolHigh />}
+                            </button>
+                            <input type="range" min="0" max="100" value={volume}
+                                onChange={e => setVolume(+e.target.value)} className="vol-slider-aesthetic" />
+                        </div>
                     </div>
                 </div>
             </div>

@@ -45,9 +45,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                     </nav>
 
                     <main className="main-content">
-                        <Providers>
-                            {children}
-                        </Providers>
+                        <div className="app-container">
+                            <Providers>
+                                {children}
+                            </Providers>
+                        </div>
                     </main>
                 </div>
             </body>
