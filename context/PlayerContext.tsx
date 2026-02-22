@@ -122,34 +122,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         let cancelled = false;
         let blobUrl: string | null = null;
-        let abortCtrl: any = null;
-
-        const setAudioSrc = (audio: HTMLAudioElement, src: string): Promise<void> => {
-            return new Promise((resolve, reject) => {
-                const cleanup = () => {
-                    audio.removeEventListener('canplay', onOk);
-                    audio.removeEventListener('error', onFail);
-                };
-                const onOk = async () => {
-                    try {
-                        audio.playbackRate = playbackSpeed;
-                        await audio.play();
-                        cleanup();
-                        resolve();
-                    } catch (e) { cleanup(); reject(e); }
-                };
-                const onFail = () => {
-                    cleanup();
-                    const err = audio.error;
-                    reject(new Error(err?.message || `MediaError code ${err?.code}`));
-                };
-                audio.addEventListener('canplay', onOk);
-                audio.addEventListener('error', onFail);
-                audio.pause();
-                audio.src = src;
-                audio.load();
-            });
-        };
+        let abortCtrl: AbortController | null = null;
 
         const fetchAndPlay = async () => {
             const audio = audioRef.current;
@@ -161,32 +134,84 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
 
             /**
-             * ĐỐI VỚI FILE LỚN (>100MB):
-             * Google Drive sẽ chặn tải và hiển thị trang cảnh báo virus.
-             * Cách duy nhất để vượt qua là dùng API Key kèm tham số acknowledgeAbuse=true.
+             * CHIẾN LƯỢC PHÁT NHẠC:
+             * 1. Dùng fetch() để tải dữ liệu audio thành Blob
+             * 2. Kiểm tra content-type - nếu là HTML thì đó là trang cảnh báo virus → bỏ qua
+             * 3. Tạo Blob URL rồi gán vào audio.src
+             * Cách này tránh được lỗi MEDIA_ELEMENT_ERROR: Format error
              */
-            const urlsToTry = [];
+            const urlsToTry: { url: string; label: string }[] = [];
 
             if (apiKey) {
-                // Nguồn 1 (Ưu tiên): API chính thức với cờ xác nhận bỏ qua cảnh báo virus
-                urlsToTry.push(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}&acknowledgeAbuse=true&supportsAllDrives=true`);
-                // Nguồn 2: Link download trực tiếp từ API
-                urlsToTry.push(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`);
+                urlsToTry.push({
+                    url: `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}&acknowledgeAbuse=true&supportsAllDrives=true`,
+                    label: 'Google API (acknowledgeAbuse)',
+                });
+                urlsToTry.push({
+                    url: `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`,
+                    label: 'Google API (standard)',
+                });
             }
 
-            // Nguồn 3: Link UC truyền thống (thường lỗi với file lớn nhưng vẫn để lại làm dự phòng)
-            urlsToTry.push(`https://drive.google.com/uc?id=${fileId}&export=download&confirm=t`);
+            // UC link cuối cùng (thường bị CORS nhưng để dự phòng)
+            urlsToTry.push({
+                url: `https://drive.google.com/uc?id=${fileId}&export=download&confirm=t`,
+                label: 'Google UC (fallback)',
+            });
 
-            for (const url of urlsToTry) {
+            for (const { url, label } of urlsToTry) {
+                if (cancelled) return;
+                console.log(`[Player] Đang thử nguồn: ${label}`);
+
                 try {
+                    // ── Bước 1: Fetch dữ liệu audio ──
+                    abortCtrl = new AbortController();
+                    const response = await fetch(url, {
+                        signal: abortCtrl.signal,
+                    });
+
                     if (cancelled) return;
 
-                    const isAPI = url.includes('googleapis.com');
-                    console.log(`[Player] Thử nguồn: ${isAPI ? 'Google API (Bypass Virus Scan)' : 'Google UC'}`);
+                    if (!response.ok) {
+                        console.warn(`[Player] ${label}: HTTP ${response.status}`);
+                        continue;
+                    }
 
-                    audio.crossOrigin = null;
+                    // ── Bước 2: Kiểm tra content-type ──
+                    const contentType = response.headers.get('content-type') || '';
+                    console.log(`[Player] ${label}: content-type = ${contentType}`);
 
-                    // Thực hiện gán src và chờ load
+                    // Nếu nhận về HTML → đây là trang cảnh báo virus, bỏ qua
+                    if (contentType.includes('text/html')) {
+                        console.warn(`[Player] ${label}: Nhận HTML (trang cảnh báo virus) → bỏ qua`);
+                        continue;
+                    }
+
+                    // ── Bước 3: Tạo Blob URL ──
+                    const blob = await response.blob();
+                    if (cancelled) return;
+
+                    if (blob.size < 1000) {
+                        // File quá nhỏ, có thể là error page
+                        const text = await blob.text();
+                        if (text.includes('<html') || text.includes('<!DOCTYPE')) {
+                            console.warn(`[Player] ${label}: Blob quá nhỏ và chứa HTML → bỏ qua`);
+                            continue;
+                        }
+                    }
+
+                    // Revoke URL cũ nếu có
+                    if (blobUrl) {
+                        URL.revokeObjectURL(blobUrl);
+                    }
+
+                    // Tạo blob với đúng mime type
+                    const audioBlob = new Blob([blob], {
+                        type: contentType.includes('audio') ? contentType : 'audio/mpeg',
+                    });
+                    blobUrl = URL.createObjectURL(audioBlob);
+
+                    // ── Bước 4: Gán Blob URL vào audio và phát ──
                     await new Promise<void>((resolve, reject) => {
                         const onCanPlay = () => {
                             audio.removeEventListener('canplay', onCanPlay);
@@ -196,48 +221,52 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                         const onErr = () => {
                             audio.removeEventListener('canplay', onCanPlay);
                             audio.removeEventListener('error', onErr);
-                            reject(new Error(audio.error?.message || 'Format error (Có thể là trang HTML cảnh báo virus)'));
+                            reject(new Error(audio.error?.message || `MediaError code ${audio.error?.code}`));
                         };
 
                         audio.addEventListener('canplay', onCanPlay);
                         audio.addEventListener('error', onErr);
 
-                        audio.src = url;
+                        audio.crossOrigin = null;
+                        audio.src = blobUrl!;
                         audio.load();
                     });
 
-                    if (!cancelled) {
-                        const audio = audioRef.current;
-                        if (!audio) return;
-                        audio.playbackRate = playbackSpeed;
-                        await audio.play();
-                        setIsPlaying(true);
-                        setIsLoading(false);
-                        isLoadingRef.current = false;
-                        console.log('[Player] ✓ Phát nhạc thành công!');
-                        return;
-                    }
+                    if (cancelled) return;
+                    audio.playbackRate = playbackSpeed;
+                    await audio.play();
+                    setIsPlaying(true);
+                    setIsLoading(false);
+                    isLoadingRef.current = false;
+                    console.log(`[Player] ✓ Phát nhạc thành công qua ${label}!`);
+                    return; // Thành công, không cần thử nguồn khác
+
                 } catch (e: any) {
                     if (cancelled) return;
-                    console.warn(`[Player] Nguồn lỗi:`, e.message);
+                    if (e.name === 'AbortError') return;
+                    console.warn(`[Player] ${label} lỗi:`, e.message);
+                    // Revoke blob URL thất bại
+                    if (blobUrl) {
+                        URL.revokeObjectURL(blobUrl);
+                        blobUrl = null;
+                    }
                 }
             }
 
-            // Fallback cuối cùng: Thử dùng proxy công cộng nếu tất cả đều thất bại (tùy chọn)
-            // Ở đây chúng ta tạm thời chỉ báo lỗi nếu 3 nguồn trên đều tịt
+            // Tất cả nguồn đều thất bại
             if (!cancelled) {
-                console.error('[Player] ✗ Không thể phát bài này. Có thể file quá lớn hoặc quyền truy cập bị chặn.');
-            }
-
-            if (!cancelled) {
-                setIsPlaying(false); setIsLoading(false); isLoadingRef.current = false;
+                console.error('[Player] ✗ Không thể phát bài này. Tất cả nguồn đều thất bại.');
+                console.error('[Player] Kiểm tra: 1) API Key hợp lệ 2) File được chia sẻ công khai 3) File tồn tại');
+                setIsPlaying(false);
+                setIsLoading(false);
+                isLoadingRef.current = false;
             }
         };
 
         if (currentTrack) fetchAndPlay();
         return () => {
             cancelled = true;
-            if (abortCtrl) abortCtrl.abort();
+            if (abortCtrl) { try { abortCtrl.abort(); } catch (_) { } }
             if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
         };
     }, [currentTrack]);
@@ -284,14 +313,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             audio.play().then(() => setIsPlaying(true))
                 .catch(err => {
                     console.error("[Player] TogglePlay failed:", err);
-                    // Force a reload if it's a structural error
+                    // Force a full re-fetch if there's a structural error
                     if (audio.error) {
-                        const fileId = currentTrack.file_id || String(currentTrack.id);
-                        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
-                        const url = currentTrack.stream_url || `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}`;
-                        audio.src = url;
-                        audio.load();
-                        audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+                        console.log("[Player] Re-triggering fetch flow...");
+                        const track = { ...currentTrack };
+                        setCurrentTrack(null);
+                        setTimeout(() => {
+                            setCurrentTrack(track);
+                            setIsPlaying(true);
+                        }, 100);
                     }
                 });
         }
