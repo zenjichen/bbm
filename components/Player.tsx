@@ -18,157 +18,38 @@ function fmt(s: number) {
     return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 }
 
-// ── Deterministic thumbnail from picsum.photos ─────────────────
 function trackThumb(fileId: string): string {
     const seed = (fileId || 'bbmmusic').replace(/[^a-zA-Z0-9]/g, '').slice(0, 16) || 'bbmdefault';
     return `https://picsum.photos/seed/${seed}/200/200`;
 }
 
-// ── Real-time Waveform (Web Audio API → CSS fallback) ─────────
-function Waveform({ audioRef, isPlaying }: {
-    audioRef: React.MutableRefObject<HTMLAudioElement | null>;
-    isPlaying: boolean;
-}) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const rafRef = useRef<number>(0);
-    const analyserRef = useRef<AnalyserNode | null>(null);
-    const audioCtxRef = useRef<AudioContext | null>(null);
-    const setupDoneRef = useRef(false);
-    const [webAudioReady, setWebAudioReady] = useState(false);
-
-    // Connect Web Audio API once on first play interaction
-    useEffect(() => {
-        const audio = audioRef.current;
-        if (!audio) return;
-
-        const setup = async () => {
-            // Resume if already connected but suspended
-            if (audioCtxRef.current) {
-                if (audioCtxRef.current.state === 'suspended') {
-                    await audioCtxRef.current.resume();
-                }
-                setWebAudioReady(true);
-                return;
-            }
-            if (setupDoneRef.current) return;
-
-            const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
-            if (!AC) return;
-
-            try {
-                const ctx = new AC() as AudioContext;
-                const analyser = ctx.createAnalyser();
-                analyser.fftSize = 256;          // 128 bins — smooth + detailed
-                analyser.smoothingTimeConstant = 0.82;
-
-                const source = ctx.createMediaElementSource(audio);
-                source.connect(analyser);
-                analyser.connect(ctx.destination);
-
-                audioCtxRef.current = ctx;
-                analyserRef.current = analyser;
-                setupDoneRef.current = true;
-
-                if (ctx.state === 'suspended') await ctx.resume();
-                setWebAudioReady(true);
-            } catch (err) {
-                console.warn('[BBM Waveform] Web Audio unavailable, using CSS fallback:', err);
-            }
-        };
-
-        audio.addEventListener('play', setup);
-        return () => audio.removeEventListener('play', setup);
-    }, [audioRef]);
-
-    // Canvas draw loop
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        const analyser = analyserRef.current;
-        if (!canvas || !analyser || !isPlaying || !webAudioReady) {
-            cancelAnimationFrame(rafRef.current);
-            return;
-        }
-
-        const draw = () => {
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-            const W = canvas.width, H = canvas.height;
-            ctx.clearRect(0, 0, W, H);
-
-            const data = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(data);
-
-            const BARS = 52;
-            const bw = (W / BARS) * 0.55;
-            const gap = W / BARS;
-
-            for (let i = 0; i < BARS; i++) {
-                const raw = data[Math.floor(i * data.length / BARS)] / 255;
-                const h = Math.max(3, raw * H * 0.94);
-                const x = i * gap;
-                const y = (H - h) / 2;
-
-                const g = ctx.createLinearGradient(0, H, 0, 0);
-                g.addColorStop(0, `rgba(124,58,237,${0.4 + raw * 0.6})`);
-                g.addColorStop(0.5, `rgba(168,85,247,${0.55 + raw * 0.45})`);
-                g.addColorStop(1, `rgba(192,132,252,${0.35 + raw * 0.65})`);
-                ctx.fillStyle = g;
-                ctx.beginPath();
-                ctx.roundRect(x, y, bw, h, 2);
-                ctx.fill();
-            }
-
-            // Glow layer
-            ctx.filter = 'blur(4px)';
-            ctx.globalAlpha = 0.28;
-            for (let i = 0; i < BARS; i++) {
-                const raw = data[Math.floor(i * data.length / BARS)] / 255;
-                if (raw < 0.25) continue;
-                const h = Math.max(3, raw * H * 0.94);
-                const x = i * gap;
-                const y = (H - h) / 2;
-                ctx.fillStyle = `rgba(192,132,252,${raw})`;
-                ctx.beginPath();
-                ctx.roundRect(x, y, (W / BARS) * 0.55, h, 2);
-                ctx.fill();
-            }
-            ctx.filter = 'none';
-            ctx.globalAlpha = 1;
-
-            rafRef.current = requestAnimationFrame(draw);
-        };
-
-        draw();
-        return () => cancelAnimationFrame(rafRef.current);
-    }, [isPlaying, webAudioReady]);
-
-    // CSS fallback bars
-    const cssBars = useMemo(() => Array.from({ length: 48 }, (_, i) => {
+// ── CSS Waveform (no Web Audio API needed — compatible with Google Drive CORS) ──
+// Note: Web Audio API requires crossOrigin='anonymous' which breaks Google Drive streams.
+// CSS animation gives beautiful visual without any CORS requirements.
+function CSSWaveform({ isPlaying }: { isPlaying: boolean }) {
+    const bars = useMemo(() => Array.from({ length: 48 }, (_, i) => {
         const x = i / 48;
-        const h = Math.max(0.1, Math.exp(-Math.pow((x - 0.3) * 3, 2)) * 0.7 + Math.exp(-Math.pow((x - 0.7) * 4, 2)) * 0.5 + Math.sin(i * 2.1) * 0.15);
-        return { h: Math.max(4, Math.min(34, h * 36)), delay: (i * 43 + i * i * 7) % 900, dur: 380 + (i * 97) % 380 };
+        const h = Math.max(0.1,
+            Math.exp(-Math.pow((x - 0.3) * 3, 2)) * 0.7 +
+            Math.exp(-Math.pow((x - 0.7) * 4, 2)) * 0.5 +
+            Math.sin(i * 2.1) * 0.15 + Math.cos(i * 3.7) * 0.1
+        );
+        return {
+            h: Math.max(4, Math.min(34, h * 36)),
+            delay: (i * 43 + i * i * 7) % 900,
+            dur: 380 + (i * 97) % 400,
+        };
     }), []);
 
     return (
-        <div className="waveform-container">
-            {/* Canvas — shown when Web Audio is ready */}
-            <canvas
-                ref={canvasRef}
-                width={244} height={40}
-                className={`wf-canvas ${webAudioReady ? 'wf-visible' : 'wf-hidden'}`}
-            />
-            {/* CSS fallback — shown when Web Audio not yet ready */}
-            {!webAudioReady && (
-                <div className={`css-waveform ${isPlaying ? 'wf-playing' : ''}`}>
-                    {cssBars.map((b, i) => (
-                        <div key={i} className="wf-bar" style={{
-                            '--bar-h': `${b.h}px`,
-                            '--delay': `${b.delay}ms`,
-                            '--dur': `${b.dur}ms`,
-                        } as React.CSSProperties} />
-                    ))}
-                </div>
-            )}
+        <div className={`css-waveform ${isPlaying ? 'wf-playing' : ''}`}>
+            {bars.map((b, i) => (
+                <div key={i} className="wf-bar" style={{
+                    '--bar-h': `${b.h}px`,
+                    '--delay': `${b.delay}ms`,
+                    '--dur': `${b.dur}ms`,
+                } as React.CSSProperties} />
+            ))}
         </div>
     );
 }
@@ -196,10 +77,10 @@ function ProgressBar({ progress, seekTo, currentTime, totalDuration }: {
         if (dragging.current) seekTo(p);
     };
     const onUp = (e: React.MouseEvent) => { if (dragging.current) { seekTo(pct(e.clientX)); dragging.current = false; setActive(false); } };
-    const onLeave = () => { setTip(null); };
+    const onLeave = () => setTip(null);
     const onTouch = (e: React.TouchEvent) => { dragging.current = true; seekTo(pct(e.touches[0].clientX)); };
     const onTouchMove = (e: React.TouchEvent) => { if (dragging.current) { e.preventDefault(); seekTo(pct(e.touches[0].clientX)); } };
-    const onTouchEnd = () => { dragging.current = false; };
+    const onTouchEnd = () => { dragging.current = false; setActive(false); };
 
     useEffect(() => {
         const up = () => { dragging.current = false; setActive(false); };
@@ -259,7 +140,7 @@ export default function Player() {
     const {
         currentTrack, isPlaying, isLoading, togglePlay,
         nextTrack, prevTrack, progress, currentTime, totalDuration,
-        volume, isShuffle, repeatMode, playbackSpeed, audioRef,
+        volume, isShuffle, repeatMode, playbackSpeed,
         seekTo, setVolume, toggleShuffle, toggleRepeat, setPlaybackSpeed,
     } = usePlayer();
 
@@ -271,28 +152,21 @@ export default function Player() {
 
     const [imgError, setImgError] = useState(false);
     const thumbUrl = currentTrack ? trackThumb(currentTrack.file_id) : '';
-
-    // Reset imgError when track changes
     useEffect(() => { setImgError(false); }, [currentTrack?.file_id]);
 
     if (!currentTrack) return null;
 
     return (
         <div className="player-bar">
-            {/* Drag progress — full width at very top */}
             <ProgressBar progress={progress} seekTo={seekTo} currentTime={currentTime} totalDuration={totalDuration} />
 
             <div className="player-inner">
-                {/* Left: thumbnail + track info */}
+                {/* Left: cover + info */}
                 <div className="player-left">
                     <div className={`player-cover ${isPlaying ? 'cover-active' : ''}`}>
                         {!imgError ? (
-                            <img
-                                src={thumbUrl}
-                                alt={currentTrack.title || ''}
-                                onError={() => setImgError(true)}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }}
-                            />
+                            <img src={thumbUrl} alt="" onError={() => setImgError(true)}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
                         ) : <span style={{ fontSize: 22 }}>🎵</span>}
                     </div>
                     <div className="player-text">
@@ -303,7 +177,7 @@ export default function Player() {
 
                 {/* Center: waveform + controls */}
                 <div className="player-center">
-                    <Waveform audioRef={audioRef} isPlaying={isPlaying} />
+                    <CSSWaveform isPlaying={isPlaying} />
                     <div className="player-buttons">
                         <button className={`pl-btn ${isShuffle ? 'pl-btn-on' : ''}`} onClick={toggleShuffle} title="Shuffle"><ShuffleIcon /></button>
                         <button className="pl-btn" onClick={prevTrack} title="Prev"><PrevIcon /></button>

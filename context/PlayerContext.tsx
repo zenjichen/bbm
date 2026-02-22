@@ -72,8 +72,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (typeof window !== "undefined" && !audioRef.current) {
             audioRef.current = new Audio();
-            // crossOrigin MUST be set before any src for Web Audio API CORS to work
-            audioRef.current.crossOrigin = 'anonymous';
+            // NOTE: Do NOT set crossOrigin='anonymous' — Google Drive returns 403
+            // when the browser adds Origin header (CORS mode). Audio plays fine
+            // in default no-cors mode. Waveform uses CSS animation instead.
             audioRef.current.volume = 0.8;
 
             audioRef.current.addEventListener('timeupdate', () => {
