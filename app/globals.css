@@ -518,18 +518,30 @@ body {
 .track-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px 14px;
+  gap: 16px;
+  padding: 10px 16px;
   border-radius: 12px;
   cursor: pointer;
-  transition: var(--fast);
+  transition: transform 0.2s, background 0.2s, opacity 0.4s ease;
+  user-select: none;
+  border: 1px solid transparent;
   position: relative;
   text-decoration: none;
   color: inherit;
 }
 
+/* Focus mode: dim other tracks when playing */
+body[data-playing="true"] .track-item:not(.active) {
+  opacity: 0.5;
+}
+
+body[data-playing="true"] .track-item:not(.active):hover {
+  opacity: 0.8;
+}
+
 .track-item:hover {
-  background: rgba(124, 58, 237, 0.08);
+  background: var(--bg-elevated);
+  transform: translateX(4px);
 }
 
 .track-item.active {
@@ -1564,6 +1576,13 @@ body {
   color: var(--text-primary) !important;
 }
 
+.sidebar-item-active .sidebar-item-icon {
+  transform: translateY(-2px);
+  box-shadow:
+    0 5px 0 rgba(0, 0, 0, 0.5),
+    0 0 15px var(--accent-glow-s);
+}
+
 .sidebar-item-icon {
   width: 36px;
   height: 36px;
@@ -1607,6 +1626,37 @@ body {
   background: var(--accent-light);
   flex-shrink: 0;
   box-shadow: 0 0 6px var(--accent);
+}
+
+.track-table-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-1);
+}
+
+.track-table-header span:nth-child(1) {
+  width: 30px;
+  text-align: center;
+}
+
+.track-table-header span:nth-child(2) {
+  width: 44px;
+}
+
+.track-table-header span:nth-child(3) {
+  flex: 1;
+}
+
+.track-table-header span:nth-child(4) {
+  width: 60px;
+  text-align: right;
 }
 
 .sidebar-loading {
