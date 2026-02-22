@@ -2036,20 +2036,81 @@ body[data-playing="true"] .main-panel {
 
 @media (max-width: 600px) {
   .player-inner {
-    padding: 0 10px;
-    gap: 6px;
+    padding: 0 12px;
+    gap: 8px;
+    justify-content: center;
   }
 
   .player-left {
-    flex: 0 0 auto;
+    flex: 0 0 120px;
+    /* Nhỏ lại cho mobile */
+    gap: 8px;
   }
 
-  .player-left .player-text {
-    max-width: 90px;
+  .player-cover {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+  }
+
+  .player-text-premium {
+    display: none;
+    /* Ẩn text trên mobile cực nhỏ hoặc dùng flex-column */
+  }
+
+  .player-center {
+    flex: 1;
+    max-width: none;
+  }
+
+  .player-buttons-premium {
+    gap: 8px;
+    padding: 4px 8px;
+  }
+
+  .pl-btn-framed {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  /* Ẩn bớt nút trên mobile để đỡ chật */
+  .pl-btn-framed[title="Shuffle"],
+  .pl-btn-framed[title="Repeat"] {
+    display: none;
+  }
+
+  .pl-play-main-premium {
+    width: 50px;
+    height: 50px;
   }
 
   .player-right {
     flex: 0 0 auto;
+    width: auto;
+  }
+
+  .vol-wrap-aesthetic {
+    display: none;
+    /* Volume capsule quá to cho mobile */
+  }
+
+  /* Hiện icon volume đơn giản thay vì capsule */
+  .player-right::after {
+    content: '🔊';
+    font-size: 18px;
+    opacity: 0.5;
+  }
+}
+
+@media (max-width: 400px) {
+  .player-left {
+    display: none;
+    /* Chỉ hiện controls trên màn hình siêu nhỏ */
+  }
+
+  .player-inner {
+    justify-content: center;
   }
 }
 
@@ -2297,7 +2358,14 @@ body[data-playing="true"] .pb-wrap {
 /* Mobile Adjustments for Playing State */
 @media (max-width: 600px) {
   body[data-playing="true"] .player-bar {
-    height: 130px;
+    height: 120px;
+    /* Giảm độ cao xuống chút */
+  }
+
+  body[data-playing="true"] .player-cover {
+    width: 50px;
+    height: 50px;
+    transform: translateY(-10px);
   }
 
   body[data-playing="true"] .sidebar {
@@ -2307,5 +2375,11 @@ body[data-playing="true"] .pb-wrap {
 
   body[data-playing="true"] .main-panel {
     max-height: none;
+  }
+
+  /* Đảm bảo sidebar list trên mobile không bị vỡ */
+  .sidebar-list {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
   }
 }
