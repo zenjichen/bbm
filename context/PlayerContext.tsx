@@ -142,15 +142,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
                 const onError = (e: any) => {
                     const err = audio.error;
-                    let msg = "Network or Unknown Error";
+                    let msg = "Network/CORS Error";
                     if (err) {
                         switch (err.code) {
-                            case 1: msg = "Aborted"; break;
-                            case 2: msg = "Network Error (Check Connection)"; break;
-                            case 3: msg = "Decode Error (Invalid Format)"; break;
-                            case 4: msg = "Source Not Supported / Link Expired"; break;
+                            case 1: msg = "Phát nhạc bị gián đoạn (Aborted)"; break;
+                            case 2: msg = "Lỗi mạng (Network Error)"; break;
+                            case 3: msg = "Lỗi giải mã (Format not supported)"; break;
+                            case 4: msg = "Link nhạc hết hạn hoặc bị chặn"; break;
                         }
-                        if (err.message) msg += `: ${err.message}`;
                     }
                     cleanup();
                     reject(new Error(msg));
@@ -166,11 +165,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                 audio.addEventListener('error', onError);
                 audio.addEventListener('stalled', onError);
 
-                // Reset and Load with no-referrer
+                // Reset state cleanly
                 audio.pause();
-                audio.setAttribute('referrerpolicy', 'no-referrer');
-                audio.src = url;
+                audio.src = "";
                 audio.load();
+
+                // Small timeout to let the media engine reset
+                setTimeout(() => {
+                    audio.src = url;
+                    audio.load();
+                }, 50);
             });
         };
 
