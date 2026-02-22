@@ -99,22 +99,68 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+/* ─── Progress Bar (PB) ─── */
+.pb-wrap {
+  width: 100%;
+  padding: 0;
+  /* Align with edges */
+  position: absolute;
+  top: -10px;
+  /* Float above the player inner */
+  left: 0;
+  z-index: 10;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.pb-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  position: relative;
+  transition: height 0.3s ease;
+  /* Larger hit area for easier dragging */
+  padding: 10px 0;
+  background-clip: content-box;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #1e1e4a;
-  border-radius: 3px;
+.pb-track:hover,
+.pb-active {
+  height: 8px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #2e2e6a;
+.pb-fill {
+  height: 100%;
+  background: var(--grad-primary);
+  position: relative;
+  border-radius: 0 4px 4px 0;
+}
+
+.pb-thumb {
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 15px var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.pb-track:hover .pb-thumb,
+.pb-active .pb-thumb {
+  opacity: 1;
+}
+
+.pb-times {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin-top: 5px;
 }
 
 /* ================================================================
@@ -2035,16 +2081,25 @@ body[data-playing="true"] .main-panel {
 }
 
 @media (max-width: 600px) {
+  .player-bar {
+    height: 140px;
+    /* Tăng độ cao để chứa 2 hàng */
+    padding-top: 15px;
+  }
+
   .player-inner {
-    padding: 0 12px;
-    gap: 8px;
-    justify-content: center;
+    flex-direction: column;
+    /* Chuyển sang hàng dọc cho mobile */
+    gap: 12px;
+    padding: 10px 16px;
+    justify-content: flex-start;
   }
 
   .player-left {
-    flex: 0 0 120px;
-    /* Nhỏ lại cho mobile */
-    gap: 8px;
+    flex: 0 0 auto;
+    width: 100%;
+    justify-content: center;
+    max-width: none;
   }
 
   .player-cover {
@@ -2054,18 +2109,30 @@ body[data-playing="true"] .main-panel {
   }
 
   .player-text-premium {
-    display: none;
-    /* Ẩn text trên mobile cực nhỏ hoặc dùng flex-column */
+    display: block !important;
+    /* Hiện tên bài hát trên mobile dạng hàng đơn */
+    text-align: center;
+    padding: 0;
+  }
+
+  .player-title-full {
+    font-size: 14px;
+    max-width: 250px;
+    margin: 0 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .player-center {
-    flex: 1;
-    max-width: none;
+    width: 100%;
   }
 
   .player-buttons-premium {
-    gap: 8px;
-    padding: 4px 8px;
+    width: 100%;
+    justify-content: space-evenly;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 8px;
   }
 
   .pl-btn-framed {
@@ -2081,25 +2148,33 @@ body[data-playing="true"] .main-panel {
   }
 
   .pl-play-main-premium {
-    width: 50px;
-    height: 50px;
+    width: 54px;
+    height: 54px;
   }
 
   .player-right {
-    flex: 0 0 auto;
-    width: auto;
-  }
-
-  .vol-wrap-aesthetic {
     display: none;
-    /* Volume capsule quá to cho mobile */
+    /* Ẩn hẳn volume trên mobile để tập trung trải nghiệm nghe */
   }
 
-  /* Hiện icon volume đơn giản thay vì capsule */
-  .player-right::after {
-    content: '🔊';
-    font-size: 18px;
-    opacity: 0.5;
+  /* Progress bar mobile upgrade */
+  .pb-track {
+    height: 8px;
+    padding: 15px 0;
+    /* Vùng chạm cực lớn */
+  }
+
+  .pb-thumb {
+    width: 18px;
+    height: 18px;
+    opacity: 1;
+    /* Luôn hiện knob trên mobile */
+  }
+
+  .pb-times {
+    font-size: 13px;
+    /* To hơn dễ đọc */
+    padding: 0 20px;
   }
 }
 
