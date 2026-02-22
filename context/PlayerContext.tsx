@@ -160,48 +160,53 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             const fileId = currentTrack.file_id || String(currentTrack.id);
             const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
 
-            // --- Strategy 1: Direct Download Link (Often works best without CORS headers) ---
-            const ucUrl = `https://drive.google.com/uc?id=${encodeURIComponent(fileId)}&export=download`;
-            // --- Strategy 2: API alt=media Link ---
-            const apiMediaUrl = apiKey
-                ? `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}&supportsAllDrives=true`
-                : null;
+            // Strategy 1: Google Drive UC with confirm=t (to bypass virus scan warning for large files)
+            // Strategy 2: Google Drive API alt=media
 
-            // Try each URL in sequence
-            const urlsToTry = [ucUrl];
-            if (apiMediaUrl) urlsToTry.push(apiMediaUrl);
+            const urlsToTry = [
+                `https://drive.google.com/uc?id=${encodeURIComponent(fileId)}&export=download&confirm=t`,
+                `https://docs.google.com/uc?id=${encodeURIComponent(fileId)}&export=download`,
+            ];
+
+            if (apiKey) {
+                urlsToTry.push(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}&supportsAllDrives=true`);
+            }
 
             for (const url of urlsToTry) {
                 try {
                     if (cancelled) return;
-                    console.log(`[Player] Trying URL: ${url.split('?')[0]}...`);
+                    console.log(`[Player] Trying play: ${url.split('?')[0].split('/').pop()}...`);
 
-                    // Note: We use the audio element directly, NOT fetch, 
-                    // because audio tags have more lenient CORS rules for public resources.
+                    // We must disable crossOrigin for Google Drive links to work correctly in <audio> tag
+                    // when they don't provide perfect CORS headers.
+                    audio.crossOrigin = null;
+
                     await setAudioSrc(audio, url);
 
                     if (!cancelled) {
                         setIsPlaying(true); setIsLoading(false); isLoadingRef.current = false;
-                        console.log('[Player] ✓ Playing successful');
+                        console.log('[Player] ✓ Play started');
                         return;
                     }
                 } catch (e: any) {
                     if (cancelled) return;
-                    console.warn(`[Player] Failed URL ${url.split('?')[0]}:`, e.message);
+                    console.warn(`[Player] Failed:`, e.message);
                 }
             }
 
-            // --- Strategy Final Fallback: fetch() → Blob URL ---
-            // Only if direct links fail. Note: This will likely hit CORS if Strategy 1/2 didn't work.
-            if (apiMediaUrl) {
+            // --- Last Resort: fetch() → Blob URL ---
+            if (apiKey) {
                 try {
                     if (cancelled) return;
-                    console.log('[Player] Final attempt: fetch -> blob...');
+                    console.log('[Player] Fallback: fetch binary -> blob...');
                     abortCtrl = new AbortController();
-                    const res = await fetch(apiMediaUrl, {
+                    const mediaUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}&supportsAllDrives=true`;
+
+                    const res = await fetch(mediaUrl, {
                         signal: abortCtrl.signal,
                         redirect: 'follow',
                     });
+
                     if (res.ok) {
                         const contentType = res.headers.get('content-type') || 'audio/mpeg';
                         if (!contentType.includes('text/html')) {
@@ -210,14 +215,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                                 const blob = new Blob([buffer], { type: contentType });
                                 if (blobUrl) URL.revokeObjectURL(blobUrl);
                                 blobUrl = URL.createObjectURL(blob);
+                                audio.crossOrigin = null;
                                 await setAudioSrc(audio, blobUrl);
                                 setIsPlaying(true); setIsLoading(false); isLoadingRef.current = false;
                                 return;
                             }
                         }
                     }
-                } catch (e) {
-                    console.error('[Player] All playback strategies failed');
+                } catch (e: any) {
+                    console.error('[Player] All strategies failed:', e.message);
                 }
             }
 

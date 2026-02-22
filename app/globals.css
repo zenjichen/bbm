@@ -216,13 +216,18 @@ body {
     width: 280px;
     z-index: 1000;
     transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+    transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    box-shadow: none;
     background: #05050e;
   }
 
   .sidebar-open {
     transform: translateX(0);
+    box-shadow: 20px 0 60px rgba(0, 0, 0, 0.8);
+  }
+
+  .sidebar-collapsed {
+    transform: translateX(-100%);
   }
 
   .sidebar-backdrop {
@@ -231,15 +236,65 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
     z-index: 950;
-    animation: fade-in 0.2s ease-out;
+    animation: fade-in 0.3s ease-out;
   }
 
   .main-panel {
     padding: 16px;
+    margin-left: 0 !important;
   }
+}
+
+/* Sidebar Toggle Buttons */
+.sidebar-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.sidebar-toggle-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sidebar-toggle-btn:hover {
+  color: var(--text-main);
+  background: var(--border);
+}
+
+.panel-floating-lib-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.panel-floating-lib-btn:hover {
+  background: var(--border);
+  transform: translateY(-1px);
 }
 
 /* ── Book Layout ── */
@@ -254,16 +309,22 @@ body {
 .sidebar {
   width: var(--sidebar-w);
   flex-shrink: 0;
-  border-right: 1px solid var(--border);
   background: var(--surface);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   height: calc(100vh - var(--player-h));
   position: sticky;
   top: 0;
   overflow: hidden;
+  transition: width 0.4s cubic-bezier(0.19, 1, 0.22, 1), transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
   overflow-y: auto;
   scrollbar-width: none;
+}
+
+.sidebar-collapsed:not(@media (max-width: 768px)) {
+  width: 0;
+  border-right: none;
 }
 
 .sidebar::-webkit-scrollbar {

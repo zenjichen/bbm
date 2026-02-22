@@ -117,30 +117,24 @@ export default function MusicApp() {
 
     return (
         <>
-            {/* Mobile Header Toggle */}
-            <div className="mobile-nav-toggle">
-                <button onClick={() => setSidebarOpen(!sidebarOpen)}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                    <span>Library</span>
-                </button>
-                <div className="mobile-nav-title">
-                    {currentPlaylist ? currentPlaylist.name : 'Tất cả bài hát'}
-                </div>
-            </div>
-
             <div className="book-layout">
                 {/* Backdrop mobile */}
                 {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
 
                 {/* ── Left Sidebar ── */}
-                <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+                <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
                     <div className="sidebar-header">
-                        <div className="sidebar-title">Library</div>
-                        <div className="sidebar-sub">Your playlists</div>
+                        <div className="sidebar-title-row">
+                            <div className="sidebar-title-group">
+                                <div className="sidebar-title">Library</div>
+                                <div className="sidebar-sub">Your playlists</div>
+                            </div>
+                            <button className="sidebar-toggle-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M15 18l-6-6 6-6" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <div className="sidebar-search">
@@ -176,6 +170,15 @@ export default function MusicApp() {
 
                 {/* ── Right Panel ── */}
                 <main className="main-panel">
+                    {/* Desktop/Mobile header toggle (if sidebar is closed) */}
+                    {!sidebarOpen && (
+                        <button className="panel-floating-lib-btn" onClick={() => setSidebarOpen(true)}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M9 18l6-6-6-6" />
+                            </svg>
+                            <span>Mở Library</span>
+                        </button>
+                    )}
                     {/* Error */}
                     {error && (
                         <div className="error-banner">
