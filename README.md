@@ -1,5 +1,4 @@
-# BBM Music - Premium Telegram Streamer
-
+# BBM Music Music Box
 A personal music streaming application that plays audio directly from a Telegram channel.
 
 ## Features
