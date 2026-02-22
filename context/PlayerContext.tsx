@@ -160,49 +160,61 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             const fileId = currentTrack.file_id || String(currentTrack.id);
             const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
 
-            // Chúng ta sẽ thử 3 loại URL có khả năng stream tốt nhất từ Google
-            const urlsToTry = [
-                // 1. Link docs.google.com (thường bypass tốt nhất cho file lớn)
-                `https://docs.google.com/uc?id=${fileId}&export=download`,
-                // 2. Link drive.google.com kèm confirm=t
-                `https://drive.google.com/uc?id=${fileId}&export=download&confirm=t`,
-                // 3. Link API chính thức
-                apiKey ? `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}` : null
-            ].filter(Boolean) as string[];
+            /**
+             * ĐỐI VỚI FILE LỚN (>100MB):
+             * Google Drive sẽ chặn tải và hiển thị trang cảnh báo virus.
+             * Cách duy nhất để vượt qua là dùng API Key kèm tham số acknowledgeAbuse=true.
+             */
+            const urlsToTry = [];
+
+            if (apiKey) {
+                // Nguồn 1 (Ưu tiên): API chính thức với cờ xác nhận bỏ qua cảnh báo virus
+                urlsToTry.push(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}&acknowledgeAbuse=true&supportsAllDrives=true`);
+                // Nguồn 2: Link download trực tiếp từ API
+                urlsToTry.push(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`);
+            }
+
+            // Nguồn 3: Link UC truyền thống (thường lỗi với file lớn nhưng vẫn để lại làm dự phòng)
+            urlsToTry.push(`https://drive.google.com/uc?id=${fileId}&export=download&confirm=t`);
 
             for (const url of urlsToTry) {
                 try {
                     if (cancelled) return;
-                    console.log(`[Player] Đang thử nguồn: ${url.includes('googleapis') ? 'Google API' : 'Google UC'}`);
+
+                    const isAPI = url.includes('googleapis.com');
+                    console.log(`[Player] Thử nguồn: ${isAPI ? 'Google API (Bypass Virus Scan)' : 'Google UC'}`);
 
                     audio.crossOrigin = null;
 
-                    // Force the src and load
-                    audio.src = url;
-                    audio.load();
-
-                    // We wrap the audio.play() in an attempt to catch synchronous errors
+                    // Thực hiện gán src và chờ load
                     await new Promise<void>((resolve, reject) => {
-                        const onCanPlay = async () => {
+                        const onCanPlay = () => {
                             audio.removeEventListener('canplay', onCanPlay);
                             audio.removeEventListener('error', onErr);
-                            try {
-                                audio.playbackRate = playbackSpeed;
-                                await audio.play();
-                                resolve();
-                            } catch (e) { reject(e); }
+                            resolve();
                         };
                         const onErr = () => {
                             audio.removeEventListener('canplay', onCanPlay);
                             audio.removeEventListener('error', onErr);
-                            reject(new Error(audio.error?.message || 'MediaError'));
+                            reject(new Error(audio.error?.message || 'Format error (Có thể là trang HTML cảnh báo virus)'));
                         };
+
                         audio.addEventListener('canplay', onCanPlay);
                         audio.addEventListener('error', onErr);
+
+                        audio.src = url;
+                        audio.load();
                     });
+
                     if (!cancelled) {
-                        setIsPlaying(true); setIsLoading(false); isLoadingRef.current = false;
-                        console.log('[Player] ✓ Phát nhạc thành công');
+                        const audio = audioRef.current;
+                        if (!audio) return;
+                        audio.playbackRate = playbackSpeed;
+                        await audio.play();
+                        setIsPlaying(true);
+                        setIsLoading(false);
+                        isLoadingRef.current = false;
+                        console.log('[Player] ✓ Phát nhạc thành công!');
                         return;
                     }
                 } catch (e: any) {
