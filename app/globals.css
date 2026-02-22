@@ -2213,147 +2213,119 @@ body[data-playing="true"] .main-panel {
 /* Mobile Premium (768px) */
 @media (max-width: 768px) {
   :root {
-    --player-h: 160px;
+    --player-h: 180px;
   }
 
   .player-bar {
     height: var(--player-h) !important;
-    padding: 0 !important;
-    background: rgba(4, 4, 15, 0.9) !important;
-    backdrop-filter: blur(50px) saturate(2) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 15px 0 10px !important;
+    background: rgba(7, 7, 26, 0.95) !important;
+    backdrop-filter: blur(60px) saturate(2) !important;
   }
 
   .player-inner {
     flex-direction: column !important;
     height: 100% !important;
-    padding: 12px 16px !important;
-    gap: 15px !important;
-    justify-content: flex-start !important;
+    padding: 0 20px !important;
+    gap: 0 !important;
+    justify-content: space-between !important;
+    display: flex !important;
   }
 
-  /* Layer 1: Progress (Floating Top) */
-  .pb-wrap {
-    top: 0 !important;
-    position: relative !important;
-    margin-bottom: -5px !important;
-  }
-
-  .pb-track {
-    height: 10px !important;
-    padding: 10px 0 !important;
-  }
-
-  .pb-thumb {
-    opacity: 1 !important;
-    width: 20px !important;
-    height: 20px !important;
-    background: #fff !important;
-    box-shadow: 0 0 15px var(--accent) !important;
-  }
-
-  .pb-times {
-    margin-top: -5px !important;
-    padding: 0 5px !important;
-    font-size: 12px !important;
-  }
-
-  /* Layer 2: Track Info */
+  /* Layer 1: Track Info (Top) */
   .player-left {
+    order: 1 !important;
     flex: 0 0 auto !important;
     width: 100% !important;
     justify-content: center !important;
     gap: 12px !important;
-    overflow: visible !important;
+    margin-bottom: 10px !important;
   }
 
   .player-cover {
-    width: 44px !important;
-    height: 44px !important;
-    transform: none !important;
-    border-radius: 8px !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 10px !important;
   }
 
   .player-text-premium {
-    flex: 0 1 auto !important;
-    text-align: center !important;
-    max-width: 70vw !important;
+    text-align: left !important;
+    max-width: calc(100% - 60px) !important;
   }
 
   .player-title-full {
-    font-size: 15px !important;
-    font-weight: 700 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    font-size: 16px !important;
+    margin-bottom: 2px !important;
   }
 
   .player-artist-premium {
-    font-size: 12px !important;
-    opacity: 0.6 !important;
+    font-size: 13px !important;
   }
 
-  /* Layer 3: Controls */
-  .player-center {
+  /* Layer 2: Progress (Middle) */
+  .pb-wrap {
+    order: 2 !important;
+    position: relative !important;
+    top: auto !important;
     width: 100% !important;
-    margin-top: -5px !important;
+    margin: 5px 0 15px !important;
+  }
+
+  .pb-track {
+    height: 8px !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .pb-thumb {
+    opacity: 1 !important;
+    width: 18px !important;
+    height: 18px !important;
+    visibility: visible !important;
+  }
+
+  .pb-times {
+    margin-top: 6px !important;
+    font-size: 12px !important;
+    color: var(--text-secondary) !important;
+  }
+
+  /* Layer 3: Controls (Bottom) */
+  .player-center {
+    order: 3 !important;
+    width: 100% !important;
+    margin-top: 0 !important;
   }
 
   .player-buttons-premium {
     width: 100% !important;
-    background: rgba(255, 255, 255, 0.04) !important;
-    border-radius: 100px !important;
-    padding: 5px 15px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    padding: 8px 10px !important;
+    border-radius: 50px !important;
     justify-content: space-evenly !important;
-    border: 1px solid rgba(255, 255, 255, 0.03) !important;
   }
 
   .pl-play-main-premium {
-    width: 58px !important;
-    height: 58px !important;
-    background: var(--grad-primary) !important;
-    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.5) !important;
+    width: 54px !important;
+    height: 54px !important;
   }
 
   .pl-btn-framed {
-    width: 42px !important;
-    height: 42px !important;
-    border: none !important;
-    background: none !important;
+    width: 40px !important;
+    height: 40px !important;
   }
 
-  .pl-btn-framed[title="Shuffle"],
-  .pl-btn-framed[title="Repeat"] {
-    display: none !important;
-  }
-
-  /* Layer 4: Volume (Hidden) */
+  /* Hide Volume on Mobile */
   .player-right {
     display: none !important;
   }
 
-  /* Tracklist */
-  .track-item {
-    padding: 12px !important;
-    gap: 12px !important;
-  }
-
-  .track-table-header {
-    display: none !important;
-  }
-
-  .track-title {
-    font-size: 15px !important;
-  }
-
-  .track-cover {
-    width: 44px !important;
-    height: 44px !important;
-  }
-
-  /* Scroll breathing room */
+  /* Tracklist adjustments */
   .main-content {
-    padding-bottom: 180px !important;
+    padding-bottom: 200px !important;
+  }
+
+  .track-item {
+    padding: 14px 12px !important;
   }
 }
 
