@@ -180,13 +180,13 @@ export default function Player() {
                     {/* Center: Controls */}
                     <div className="player-center">
                         <div className="player-buttons-modern">
-                            <button className={`pl-btn-modern ${isShuffle ? 'active' : ''}`} onClick={toggleShuffle} title="Shuffle"><ShuffleIcon /></button>
-                            <button className="pl-btn-modern" onClick={prevTrack} title="Prev"><PrevIcon /></button>
+                            <button className={`pl-btn-modern btn-shuffle ${isShuffle ? 'active' : ''}`} onClick={toggleShuffle} title="Shuffle"><ShuffleIcon /></button>
+                            <button className="pl-btn-modern btn-prev" onClick={prevTrack} title="Prev"><PrevIcon /></button>
                             <button className="pl-play-modern" onClick={togglePlay}>
                                 {isLoading ? <div className="spin-ring" /> : isPlaying ? <PauseIcon /> : <PlayIcon />}
                             </button>
-                            <button className="pl-btn-modern" onClick={nextTrack} title="Next"><NextIcon /></button>
-                            <button className={`pl-btn-modern ${repeatMode !== 'off' ? 'active' : ''}`} onClick={toggleRepeat} title="Repeat">
+                            <button className="pl-btn-modern btn-next" onClick={nextTrack} title="Next"><NextIcon /></button>
+                            <button className={`pl-btn-modern btn-repeat ${repeatMode !== 'off' ? 'active' : ''}`} onClick={toggleRepeat} title="Repeat">
                                 <RepeatIcon one={repeatMode === 'one'} />
                             </button>
                         </div>
