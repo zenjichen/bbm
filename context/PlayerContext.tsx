@@ -127,7 +127,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                 const onCanPlay = async () => {
                     try {
                         audio.playbackRate = playbackSpeed;
-                        await audio.play();
+                        // On some mobiles, we need to call play() directly after load
+                        const playPromise = audio.play();
+                        if (playPromise !== undefined) {
+                            await playPromise;
+                        }
                         cleanup();
                         resolve();
                     } catch (e) {
@@ -138,21 +142,27 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
                 const onError = () => {
                     const err = audio.error;
+                    const msg = err ? `Audio Error ${err.code}: ${err.message}` : "Network or CORS Error";
                     cleanup();
-                    reject(new Error(err ? `Audio Error ${err.code}: ${err.message}` : "Unknown Audio Error"));
+                    reject(new Error(msg));
                 };
 
                 const cleanup = () => {
                     audio.removeEventListener('canplay', onCanPlay);
                     audio.removeEventListener('error', onError);
+                    audio.removeEventListener('stalled', onError);
                 };
 
                 audio.addEventListener('canplay', onCanPlay);
                 audio.addEventListener('error', onError);
+                audio.addEventListener('stalled', onError);
 
+                // Reset and Load
                 audio.pause();
+                audio.removeAttribute('src');
+                audio.load();
                 audio.src = url;
-                audio.load(); // Force reset of media engine
+                audio.load();
             });
         };
 
@@ -176,7 +186,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             // Fallback 2: UC Export (Download) - often bypasses some restrictions
             const fallback2 = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
 
-            const urls = [primaryUrl, fallback1, fallback2];
+            // Fallback 3: Docs UC
+            const fallback3 = `https://docs.google.com/uc?id=${encodeURIComponent(fileId)}&export=download`;
+
+            const urls = [primaryUrl, fallback1, fallback2, fallback3];
 
             for (const url of urls) {
                 if (cancelled) break;
@@ -188,13 +201,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                     }
                 } catch (err: any) {
                     if (cancelled || err.name === 'AbortError') return;
-                    console.warn(`[Player] URL failed (${url.substring(0, 30)}...):`, err.name);
+                    console.warn(`[Player] URL failed: ${url.substring(0, 40)}... - Reason: ${err.message || err.name}`);
                     // Continue to next URL
                 }
             }
 
             // If we're here, all failed
             if (!cancelled) {
+                console.error("[Player] All Google Drive URL fallbacks failed for track:", currentTrack.title);
                 setIsPlaying(false);
                 setIsLoading(false);
                 isLoadingRef.current = false;
@@ -225,9 +239,40 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }, [playbackSpeed]);
 
     const playTrack = (track: Track) => {
+        // Unlock audio for mobile browsers immediately on user gesture
+        if (audioRef.current) {
+            audioRef.current.play().then(() => {
+                audioRef.current?.pause();
+            }).catch(() => {
+                // If play() fails here it's okay, we're just unlocking/pre-warming
+                audioRef.current?.load();
+            });
+        }
         setCurrentTrack(track); setIsPlaying(true); setProgress(0); setCurrentTime(0);
     };
-    const togglePlay = () => { if (!currentTrack) return; setIsPlaying(prev => !prev); };
+
+    const togglePlay = () => {
+        const audio = audioRef.current;
+        if (!audio || !currentTrack) return;
+        if (isPlaying) {
+            audio.pause();
+            setIsPlaying(false);
+        } else {
+            audio.play().then(() => setIsPlaying(true))
+                .catch(err => {
+                    console.error("[Player] TogglePlay failed:", err);
+                    // Force a reload if it's a structural error
+                    if (audio.error) {
+                        const fileId = currentTrack.file_id || String(currentTrack.id);
+                        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
+                        const url = currentTrack.stream_url || `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}`;
+                        audio.src = url;
+                        audio.load();
+                        audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+                    }
+                });
+        }
+    };
     const nextTrack = () => {
         if (!currentTrack || playlist.length === 0) return;
         if (isShuffle) { playTrack(playlist[Math.floor(Math.random() * playlist.length)]); return; }
