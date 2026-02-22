@@ -177,7 +177,7 @@ export default function Player() {
                         </div>
                     </div>
 
-                    {/* Center: Controls */}
+                    {/* Center: Controls (desktop: full row. mobile: only play btn) */}
                     <div className="player-center">
                         <div className="player-buttons-modern">
                             <button className={`pl-btn-modern btn-shuffle ${isShuffle ? 'active' : ''}`} onClick={toggleShuffle} title="Shuffle"><ShuffleIcon /></button>
@@ -208,6 +208,16 @@ export default function Player() {
                             />
                         </div>
                     </div>
+                </div>
+
+                {/* Mobile-only: bottom controls row (Shuffle/Prev/Next/Repeat) */}
+                <div className="player-controls-bottom">
+                    <button className={`pl-btn-modern btn-shuffle ${isShuffle ? 'active' : ''}`} onClick={toggleShuffle} title="Shuffle"><ShuffleIcon /></button>
+                    <button className="pl-btn-modern btn-prev" onClick={prevTrack} title="Prev"><PrevIcon /></button>
+                    <button className="pl-btn-modern btn-next" onClick={nextTrack} title="Next"><NextIcon /></button>
+                    <button className={`pl-btn-modern btn-repeat ${repeatMode !== 'off' ? 'active' : ''}`} onClick={toggleRepeat} title="Repeat">
+                        <RepeatIcon one={repeatMode === 'one'} />
+                    </button>
                 </div>
             </div>
         </div>
