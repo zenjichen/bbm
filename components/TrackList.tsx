@@ -48,23 +48,21 @@ function TrackItem({ track, index, playlistContext }: {
             className={`track-item ${isCurrent ? 'active' : ''}`}
             id={`track-${track.id}`}
         >
-            <span className="track-number">{index + 1}</span>
-            <span className="track-play-icon" style={{ color: isCurrent ? 'var(--accent-light)' : 'var(--text-primary)' }}>
-                {isCurrent && isPlaying ? <PauseIcon /> : <PlayIcon />}
-            </span>
-
-            {/* Cover with thumbnail */}
-            <div className="track-cover">
+            <div className="track-number">
                 {isCurrent && isPlaying ? (
                     <div className="now-playing-bars">
                         <span /><span /><span /><span />
                     </div>
-                ) : !imgErr ? (
+                ) : index + 1}
+            </div>
+
+            <div className="track-cover">
+                {!imgErr ? (
                     <img
                         src={trackThumb(track.file_id)}
                         alt=""
                         onError={() => setImgErr(true)}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                 ) : (
                     <span style={{ fontSize: 16 }}>🎵</span>
@@ -75,36 +73,24 @@ function TrackItem({ track, index, playlistContext }: {
                 <div className="track-title">{track.title || "Untitled"}</div>
                 <div className="track-artist">{track.performer || "Unknown Artist"}</div>
             </div>
+
             <div className="track-duration">{formatDuration(track.duration)}</div>
         </div>
     );
 }
 
 export default function TrackList({ tracks }: { tracks: Track[] }) {
-    if (tracks.length === 0) {
-        return (
-            <div className="empty-state">
-                <div className="empty-state-icon">🎶</div>
-                <div className="empty-state-title">No tracks found</div>
-                <div className="empty-state-desc">
-                    Try a different search or run the fetch script to scan your Telegram channel.
-                </div>
-            </div>
-        );
-    }
+    if (tracks.length === 0) return null;
 
     return (
-        <div>
-            {/* Table header */}
-            <div className="track-table-header" style={{ padding: '8px 20px' }}>
-                <span style={{ width: 30, textAlign: 'center' }}>#</span>
-                <span style={{ width: 44 }}></span>
-                <span style={{ flex: 1, paddingLeft: '8px' }}>TIÊU ĐỀ</span>
-                <span style={{ width: 80, textAlign: 'right' }}>THỜI LƯỢNG</span>
+        <div className="track-list-container">
+            <div className="track-table-header">
+                <div style={{ width: 32 }}>#</div>
+                <div style={{ flex: 1, paddingLeft: 56 }}>TIÊU ĐỀ</div>
+                <div style={{ width: 60, textAlign: 'right' }}>THỜI LƯỢNG</div>
             </div>
 
-            {/* Track list */}
-            <div className="track-list stagger-enter">
+            <div className="track-list">
                 {tracks.map((track, i) => (
                     <TrackItem
                         key={track.id}

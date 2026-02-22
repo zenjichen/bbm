@@ -158,24 +158,20 @@ export default function Player() {
     return (
         <div className="player-container">
             <div className="player-bar">
-                <div className="player-dynamic-bg" style={{
-                    backgroundImage: isPlaying ? `url(${thumbUrl})` : 'none'
-                }} />
-
                 <ProgressBar progress={progress} seekTo={seekTo} currentTime={currentTime} totalDuration={totalDuration} />
 
                 <div className="player-inner">
                     {/* Left: Info */}
                     <div className="player-left">
                         <div className={`player-cover ${isPlaying ? 'cover-active' : ''}`}>
-                            {currentTrack && !imgError ? (
+                            {currentTrack && !imgError && thumbUrl ? (
                                 <img src={thumbUrl} alt="" onError={() => setImgError(true)}
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
-                                <span style={{ fontSize: 28 }}>🎵</span>
+                                <span style={{ fontSize: 24 }}>🎵</span>
                             )}
                         </div>
-                        <div className="player-text-premium" onClick={scrollToCurrent} title="Bấm để xem bài hát đang phát">
+                        <div className="player-text-premium" onClick={scrollToCurrent}>
                             <div className="player-title-full">{currentTrack?.title || "Sẵn sàng phát nhạc"}</div>
                             <div className="player-artist-premium">{currentTrack?.performer || "Chọn một bài hát để bắt đầu"}</div>
                         </div>
@@ -190,7 +186,7 @@ export default function Player() {
                                 {isLoading ? <div className="spin-ring" /> : isPlaying ? <PauseIcon /> : <PlayIcon />}
                             </button>
                             <button className="pl-btn-modern" onClick={nextTrack} title="Next"><NextIcon /></button>
-                            <button className={`pl-btn-modern ${repeatMode !== 'off' ? 'active' : ''}`} onClick={toggleRepeat}>
+                            <button className={`pl-btn-modern ${repeatMode !== 'off' ? 'active' : ''}`} onClick={toggleRepeat} title="Repeat">
                                 <RepeatIcon one={repeatMode === 'one'} />
                             </button>
                         </div>
@@ -198,12 +194,18 @@ export default function Player() {
 
                     {/* Right: Volume */}
                     <div className="player-right">
-                        <div className="vol-wrap-aesthetic">
+                        <div className="vol-wrap-aesthetic" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <button className="pl-btn-modern" onClick={toggleMute}>
                                 {volume === 0 ? <VolOff /> : volume < 50 ? <VolLow /> : <VolHigh />}
                             </button>
                             <input type="range" min="0" max="100" value={volume}
-                                onChange={e => setVolume(+e.target.value)} className="vol-slider-aesthetic" />
+                                onChange={e => setVolume(+e.target.value)}
+                                style={{
+                                    width: '80px',
+                                    accentColor: 'var(--accent)',
+                                    cursor: 'pointer'
+                                }}
+                            />
                         </div>
                     </div>
                 </div>

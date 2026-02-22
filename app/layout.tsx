@@ -31,25 +31,21 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <div className="app-layout">
                     {/* Navbar */}
                     <nav className="navbar">
-                        <div className="app-container">
-                            <div className="navbar-inner">
-                                <Link href="/" className="logo">
-                                    <MusicLogoIcon />
-                                    <div className="logo-text-wrapper">
-                                        <span className="logo-text">BBM Music</span>
-                                        <div className="logo-glimmer"></div>
-                                    </div>
-                                </Link>
-                            </div>
+                        <div className="navbar-inner">
+                            <Link href="/" className="logo">
+                                <MusicLogoIcon />
+                                <div className="logo-text-wrapper">
+                                    <span className="logo-text">BBM Music</span>
+                                    <div className="logo-glimmer"></div>
+                                </div>
+                            </Link>
                         </div>
                     </nav>
 
                     <main className="main-content">
-                        <div className="app-container">
-                            <Providers>
-                                {children}
-                            </Providers>
-                        </div>
+                        <Providers>
+                            {children}
+                        </Providers>
                     </main>
                 </div>
             </body>
