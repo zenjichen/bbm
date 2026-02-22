@@ -143,8 +143,9 @@ function parseDriveFile(f: DriveFileRaw, playlistId: string): DriveTrack {
         topic_id: null,
         date: Math.floor(modifiedMs / 1000),
         thumbnail: null,
-        // Direct public URL — browser fetches straight from Google CDN
-        stream_url: `https://drive.google.com/uc?export=download&confirm=t&id=${f.id}`,
+        // Use googleapis.com media endpoint — supports CORS (Access-Control-Allow-Origin: *)
+        // drive.google.com/uc redirect URLs are blocked by browser audio CORS policy
+        stream_url: `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media&key=${getApiKey()}`,
     };
 }
 
