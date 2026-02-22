@@ -33,16 +33,18 @@ const EMOJIS = ['🎵', '🎸', '🎹', '🎧', '🎤', '🎺', '🎻', '🥁'];
 
 // ── Sidebar Playlist Item ────────────────────────────────────
 function PlaylistItem({
-    id, name, trackCount, gradient, emoji, active, total
+    id, name, trackCount, gradient, emoji, active, total, onClick
 }: {
     id: string | number; name: string; trackCount?: number;
     gradient: string; emoji: string; active: boolean; total?: boolean;
+    onClick?: () => void;
 }) {
     return (
         <Link
             href={total ? '/' : `/?topic=${id}`}
             className={`sidebar-item ${active ? 'sidebar-item-active' : ''}`}
             style={{ '--item-grad': gradient } as React.CSSProperties}
+            onClick={onClick}
         >
             <div className="sidebar-item-icon" style={{ background: gradient }}>
                 {emoji}
@@ -61,8 +63,8 @@ function PlaylistItem({
 // ── Main App ─────────────────────────────────────────────────
 export default function MusicApp() {
     const searchParams = useSearchParams();
-    const query = searchParams.get('q') || '';
-    const playlistId = searchParams.get('topic') || null;
+    const query = searchParams?.get('q') || '';
+    const playlistId = searchParams?.get('topic') || null;
 
     const [allTracks, setAllTracks] = useState<Track[]>([]);
     const [allPlaylists, setAllPlaylists] = useState<Playlist[]>([]);
@@ -70,7 +72,7 @@ export default function MusicApp() {
     const [error, setError] = useState<string | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    // Close sidebar on navigation (mobile)
+    // Close sidebar on navigation
     useEffect(() => { setSidebarOpen(false); }, [playlistId, query]);
 
     const loadData = useCallback(async () => {
@@ -117,6 +119,27 @@ export default function MusicApp() {
 
     return (
         <>
+            {/* Mobile Library Toggle Button — in top-left of content area */}
+            <div className="mobile-topbar">
+                <button
+                    className="mobile-lib-btn"
+                    onClick={() => setSidebarOpen(true)}
+                    aria-label="Mở Library"
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+                <div className="mobile-topbar-logo">
+                    <span className="logo-text" style={{ fontSize: '16px', fontWeight: '800' }}>BBM</span>
+                </div>
+                <div className="mobile-topbar-search">
+                    <SearchInput initialQuery={query} compact />
+                </div>
+            </div>
+
             <div className="book-layout">
                 {/* Backdrop mobile */}
                 {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
@@ -129,7 +152,7 @@ export default function MusicApp() {
                                 <div className="sidebar-title">Library</div>
                                 <div className="sidebar-sub">Your playlists</div>
                             </div>
-                            <button className="sidebar-toggle-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+                            <button className="sidebar-toggle-btn" onClick={() => setSidebarOpen(false)}>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M15 18l-6-6 6-6" />
                                 </svg>
@@ -142,20 +165,18 @@ export default function MusicApp() {
                     </div>
 
                     <div className="sidebar-list">
-                        {/* All tracks */}
                         <PlaylistItem
                             id="all" name="Tất cả" trackCount={totalTracks}
                             gradient={GRADIENTS[0]} emoji="🎶"
                             active={!playlistId && !query} total
+                            onClick={() => setSidebarOpen(false)}
                         />
-
                         {loading && !allPlaylists.length && (
                             <div className="sidebar-loading">
                                 <div className="sidebar-spin" />
                                 <span>Đang tải...</span>
                             </div>
                         )}
-
                         {topicsWithCount.map((t, i) => (
                             <PlaylistItem
                                 key={t.id} id={t.id} name={t.name} trackCount={t.trackCount}
@@ -163,6 +184,7 @@ export default function MusicApp() {
                                 emoji={EMOJIS[i % EMOJIS.length]}
                                 active={playlistId === String(t.id)}
                                 total={false}
+                                onClick={() => setSidebarOpen(false)}
                             />
                         ))}
                     </div>
@@ -170,15 +192,16 @@ export default function MusicApp() {
 
                 {/* ── Right Panel ── */}
                 <main className="main-panel">
-                    {/* Desktop/Mobile header toggle (if sidebar is closed) */}
+                    {/* Desktop only: floating lib button */}
                     {!sidebarOpen && (
                         <button className="panel-floating-lib-btn" onClick={() => setSidebarOpen(true)}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M9 18l6-6-6-6" />
                             </svg>
                             <span>Mở Library</span>
                         </button>
                     )}
+
                     {/* Error */}
                     {error && (
                         <div className="error-banner">
