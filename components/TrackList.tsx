@@ -23,6 +23,11 @@ function formatDuration(seconds?: number): string {
     return `${min}:${sec < 10 ? '0' + sec : sec}`;
 }
 
+function trackThumb(fileId: string): string {
+    const seed = (fileId || 'bbm').replace(/[^a-zA-Z0-9]/g, '').slice(0, 16) || 'music';
+    return `https://picsum.photos/seed/${seed}/80/80`;
+}
+
 function TrackItem({ track, index, playlistContext }: {
     track: Track;
     index: number;
@@ -30,14 +35,11 @@ function TrackItem({ track, index, playlistContext }: {
 }) {
     const { playTrack, currentTrack, isPlaying, setPlaylist, togglePlay } = usePlayer();
     const isCurrent = currentTrack?.id === track.id;
+    const [imgErr, setImgErr] = React.useState(false);
 
     const handleClick = () => {
-        if (isCurrent) {
-            togglePlay();
-        } else {
-            setPlaylist(playlistContext);
-            playTrack(track);
-        }
+        if (isCurrent) { togglePlay(); }
+        else { setPlaylist(playlistContext); playTrack(track); }
     };
 
     return (
@@ -46,30 +48,33 @@ function TrackItem({ track, index, playlistContext }: {
             className={`track-item ${isCurrent ? 'active' : ''}`}
             id={`track-${track.id}`}
         >
-            {/* Track number / play icon */}
             <span className="track-number">{index + 1}</span>
-            <span className="track-play-icon" style={{ color: isCurrent ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+            <span className="track-play-icon" style={{ color: isCurrent ? 'var(--accent-light)' : 'var(--text-primary)' }}>
                 {isCurrent && isPlaying ? <PauseIcon /> : <PlayIcon />}
             </span>
 
-            {/* Cover */}
+            {/* Cover with thumbnail */}
             <div className="track-cover">
                 {isCurrent && isPlaying ? (
                     <div className="now-playing-bars">
-                        <span></span><span></span><span></span><span></span>
+                        <span /><span /><span /><span />
                     </div>
+                ) : !imgErr ? (
+                    <img
+                        src={trackThumb(track.file_id)}
+                        alt=""
+                        onError={() => setImgErr(true)}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }}
+                    />
                 ) : (
                     <span style={{ fontSize: 16 }}>🎵</span>
                 )}
             </div>
 
-            {/* Info */}
             <div className="track-info">
                 <div className="track-title">{track.title || "Untitled"}</div>
                 <div className="track-artist">{track.performer || "Unknown Artist"}</div>
             </div>
-
-            {/* Duration */}
             <div className="track-duration">{formatDuration(track.duration)}</div>
         </div>
     );

@@ -918,14 +918,37 @@ body {
 }
 
 /* ================================================================
-   CSS Waveform
+   CSS Waveform + Canvas Waveform
    ================================================================ */
+.waveform-container {
+  display: flex;
+  align-items: center;
+  width: 244px;
+  height: 40px;
+}
+
+.wf-canvas {
+  display: block;
+  border-radius: 6px;
+  width: 244px;
+  height: 40px;
+}
+
+.wf-hidden {
+  display: none;
+}
+
+.wf-visible {
+  display: block;
+}
+
 .css-waveform {
   display: flex;
   align-items: center;
   gap: 2px;
-  height: 36px;
-  padding: 0 4px;
+  height: 40px;
+  width: 244px;
+  padding: 0 2px;
 }
 
 .wf-bar {
@@ -951,6 +974,25 @@ body {
 
   to {
     height: var(--bar-h, 20px);
+  }
+}
+
+/* ================================================================
+   Player Cover (now with thumbnail)
+   ================================================================ */
+.cover-active {
+  animation: coverGlow 3s ease-in-out infinite;
+}
+
+@keyframes coverGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(124, 58, 237, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 28px rgba(124, 58, 237, 0.5), 0 0 8px rgba(168, 85, 247, 0.3);
   }
 }
 

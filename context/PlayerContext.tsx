@@ -72,6 +72,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (typeof window !== "undefined" && !audioRef.current) {
             audioRef.current = new Audio();
+            // crossOrigin MUST be set before any src for Web Audio API CORS to work
+            audioRef.current.crossOrigin = 'anonymous';
             audioRef.current.volume = 0.8;
 
             audioRef.current.addEventListener('timeupdate', () => {
