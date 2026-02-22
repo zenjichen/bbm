@@ -68,6 +68,10 @@ export default function MusicApp() {
     const [allPlaylists, setAllPlaylists] = useState<Playlist[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    // Close sidebar on navigation (mobile)
+    useEffect(() => { setSidebarOpen(false); }, [playlistId, query]);
 
     const loadData = useCallback(async () => {
         setLoading(true); setError(null);
@@ -112,109 +116,129 @@ export default function MusicApp() {
     const totalTracks = allPlaylists.reduce((s, p) => s + (p.trackCount ?? 0), 0) || allTracks.length;
 
     return (
-        <div className="book-layout">
-            {/* ── Left Sidebar ── */}
-            <aside className="sidebar">
-                <div className="sidebar-header">
-                    <div className="sidebar-title">Library</div>
-                    <div className="sidebar-sub">Your playlists</div>
+        <>
+            {/* Mobile Header Toggle */}
+            <div className="mobile-nav-toggle">
+                <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                    <span>Library</span>
+                </button>
+                <div className="mobile-nav-title">
+                    {currentPlaylist ? currentPlaylist.name : 'Tất cả bài hát'}
                 </div>
+            </div>
 
-                <div className="sidebar-search">
-                    <SearchInput initialQuery={query} compact />
-                </div>
+            <div className="book-layout">
+                {/* Backdrop mobile */}
+                {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
 
-                <div className="sidebar-list">
-                    {/* All tracks */}
-                    <PlaylistItem
-                        id="all" name="Tất cả" trackCount={totalTracks}
-                        gradient={GRADIENTS[0]} emoji="🎶"
-                        active={!playlistId && !query} total
-                    />
+                {/* ── Left Sidebar ── */}
+                <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+                    <div className="sidebar-header">
+                        <div className="sidebar-title">Library</div>
+                        <div className="sidebar-sub">Your playlists</div>
+                    </div>
 
-                    {loading && !allPlaylists.length && (
-                        <div className="sidebar-loading">
-                            <div className="sidebar-spin" />
-                            <span>Đang tải...</span>
+                    <div className="sidebar-search">
+                        <SearchInput initialQuery={query} compact />
+                    </div>
+
+                    <div className="sidebar-list">
+                        {/* All tracks */}
+                        <PlaylistItem
+                            id="all" name="Tất cả" trackCount={totalTracks}
+                            gradient={GRADIENTS[0]} emoji="🎶"
+                            active={!playlistId && !query} total
+                        />
+
+                        {loading && !allPlaylists.length && (
+                            <div className="sidebar-loading">
+                                <div className="sidebar-spin" />
+                                <span>Đang tải...</span>
+                            </div>
+                        )}
+
+                        {topicsWithCount.map((t, i) => (
+                            <PlaylistItem
+                                key={t.id} id={t.id} name={t.name} trackCount={t.trackCount}
+                                gradient={GRADIENTS[(i + 1) % GRADIENTS.length]}
+                                emoji={EMOJIS[i % EMOJIS.length]}
+                                active={playlistId === String(t.id)}
+                                total={false}
+                            />
+                        ))}
+                    </div>
+                </aside>
+
+                {/* ── Right Panel ── */}
+                <main className="main-panel">
+                    {/* Error */}
+                    {error && (
+                        <div className="error-banner">
+                            ⚠️ {error}
+                            {error.includes('API_KEY') && (
+                                <span> — Thêm <code>NEXT_PUBLIC_GOOGLE_API_KEY</code> vào GitHub Secrets</span>
+                            )}
                         </div>
                     )}
 
-                    {topicsWithCount.map((t, i) => (
-                        <PlaylistItem
-                            key={t.id} id={t.id} name={t.name} trackCount={t.trackCount}
-                            gradient={GRADIENTS[(i + 1) % GRADIENTS.length]}
-                            emoji={EMOJIS[i % EMOJIS.length]}
-                            active={playlistId === String(t.id)}
-                            total={false}
-                        />
-                    ))}
-                </div>
-            </aside>
-
-            {/* ── Right Panel ── */}
-            <main className="main-panel">
-                {/* Error */}
-                {error && (
-                    <div className="error-banner">
-                        ⚠️ {error}
-                        {error.includes('API_KEY') && (
-                            <span> — Thêm <code>NEXT_PUBLIC_GOOGLE_API_KEY</code> vào GitHub Secrets</span>
-                        )}
-                    </div>
-                )}
-
-                {/* Panel Header */}
-                <div className="panel-header animate-fade-in">
-                    {currentPlaylist ? (
-                        <div className="panel-playlist-head">
-                            <div
-                                className="panel-cover"
-                                style={{ background: GRADIENTS[topicsWithCount.findIndex(t => t.id === playlistId) % GRADIENTS.length + 1] || GRADIENTS[0] }}
-                            >
-                                {EMOJIS[topicsWithCount.findIndex(t => t.id === playlistId) % EMOJIS.length]}
-                            </div>
-                            <div>
-                                <div className="panel-playlist-label">Playlist</div>
-                                <h1 className="panel-playlist-title">{currentPlaylist.name}</h1>
-                                <div className="panel-playlist-meta">
-                                    <span>{filtered.length} bài</span>
-                                    {totalDur(filtered) && <><span className="meta-dot" /><span>{totalDur(filtered)}</span></>}
+                    {/* Panel Header */}
+                    <div className="panel-header animate-fade-in">
+                        {currentPlaylist ? (
+                            <div className="panel-playlist-head">
+                                <div
+                                    className="panel-cover"
+                                    style={{ background: GRADIENTS[topicsWithCount.findIndex(t => t.id === playlistId) % GRADIENTS.length + 1] || GRADIENTS[0] }}
+                                >
+                                    {EMOJIS[topicsWithCount.findIndex(t => t.id === playlistId) % EMOJIS.length]}
+                                </div>
+                                <div>
+                                    <div className="panel-playlist-label">Playlist</div>
+                                    <h1 className="panel-playlist-title">{currentPlaylist.name}</h1>
+                                    <div className="panel-playlist-meta">
+                                        <span>{filtered.length} bài</span>
+                                        {totalDur(filtered) && <><span className="meta-dot" /><span>{totalDur(filtered)}</span></>}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ) : query ? (
-                        <div className="panel-title-row">
-                            <h1 className="panel-title">Kết quả: &ldquo;{query}&rdquo;</h1>
-                            <Link href="/" className="panel-clear-btn">✕ Xóa</Link>
-                        </div>
-                    ) : (
-                        <div className="panel-title-row">
-                            <h1 className="panel-title">All Tracks</h1>
-                            <span className="panel-count">{filtered.length} bài</span>
+                        ) : query ? (
+                            <div className="panel-title-row">
+                                <h1 className="panel-title">Kết quả: &ldquo;{query}&rdquo;</h1>
+                                <Link href="/" className="panel-clear-btn">✕ Xóa</Link>
+                            </div>
+                        ) : (
+                            <div className="panel-title-row">
+                                <h1 className="panel-title">All Tracks</h1>
+                                <span className="panel-count">{filtered.length} bài</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Loading */}
+                    {loading && (
+                        <div className="panel-loading">
+                            <div className="panel-spin" />
+                            <span>Đang tải từ Google Drive…</span>
                         </div>
                     )}
-                </div>
 
-                {/* Loading */}
-                {loading && (
-                    <div className="panel-loading">
-                        <div className="panel-spin" />
-                        <span>Đang tải từ Google Drive…</span>
-                    </div>
-                )}
+                    {/* Empty */}
+                    {!loading && !error && allTracks.length === 0 && (
+                        <div className="empty-state">
+                            <div className="empty-state-icon">📁</div>
+                            <div className="empty-state-title">Chưa có nhạc</div>
+                            <div className="empty-state-desc">Thêm <code>NEXT_PUBLIC_GOOGLE_API_KEY</code> vào GitHub Secrets và đảm bảo thư mục Drive được chia sẻ công khai.</div>
+                        </div>
+                    )}
 
-                {/* Empty */}
-                {!loading && !error && allTracks.length === 0 && (
-                    <div className="empty-state">
-                        <div className="empty-state-icon">📁</div>
-                        <div className="empty-state-title">Chưa có nhạc</div>
-                        <div className="empty-state-desc">Thêm <code>NEXT_PUBLIC_GOOGLE_API_KEY</code> vào GitHub Secrets và đảm bảo thư mục Drive được chia sẻ công khai.</div>
-                    </div>
-                )}
-
-                {/* Track list */}
-                {!loading && <TrackList tracks={filtered} />}
-            </main>
-        </div>
+                    {/* Track list */}
+                    {!loading && <TrackList tracks={filtered} />}
+                </main>
+            </div>
+        </>
     );
 }
