@@ -1077,9 +1077,9 @@ input[type="range"]::-moz-range-thumb {
   z-index: -1;
   background-size: cover;
   background-position: center;
-  filter: blur(130px) brightness(0.4) saturate(2.2);
+  filter: blur(20px) brightness(0.3) saturate(1.8);
   opacity: 0;
-  transition: opacity 1.5s ease-in-out;
+  transition: opacity 1s ease-in-out;
 }
 
 /* ── Spin ring (loading indicator) ── */
