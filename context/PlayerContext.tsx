@@ -122,7 +122,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         let cancelled = false;
         let blobUrl: string | null = null;
-        let abortCtrl: AbortController | null = null;
+        let abortCtrl: any = null;
 
         const setAudioSrc = (audio: HTMLAudioElement, src: string): Promise<void> => {
             return new Promise((resolve, reject) => {
@@ -160,71 +160,61 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             const fileId = currentTrack.file_id || String(currentTrack.id);
             const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
 
-            // Strategy 1: Google Drive UC with confirm=t (to bypass virus scan warning for large files)
-            // Strategy 2: Google Drive API alt=media
-
+            // Chúng ta sẽ thử 3 loại URL có khả năng stream tốt nhất từ Google
             const urlsToTry = [
-                `https://drive.google.com/uc?id=${encodeURIComponent(fileId)}&export=download&confirm=t`,
-                `https://docs.google.com/uc?id=${encodeURIComponent(fileId)}&export=download`,
-            ];
-
-            if (apiKey) {
-                urlsToTry.push(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}&supportsAllDrives=true`);
-            }
+                // 1. Link docs.google.com (thường bypass tốt nhất cho file lớn)
+                `https://docs.google.com/uc?id=${fileId}&export=download`,
+                // 2. Link drive.google.com kèm confirm=t
+                `https://drive.google.com/uc?id=${fileId}&export=download&confirm=t`,
+                // 3. Link API chính thức
+                apiKey ? `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}` : null
+            ].filter(Boolean) as string[];
 
             for (const url of urlsToTry) {
                 try {
                     if (cancelled) return;
-                    console.log(`[Player] Trying play: ${url.split('?')[0].split('/').pop()}...`);
+                    console.log(`[Player] Đang thử nguồn: ${url.includes('googleapis') ? 'Google API' : 'Google UC'}`);
 
-                    // We must disable crossOrigin for Google Drive links to work correctly in <audio> tag
-                    // when they don't provide perfect CORS headers.
                     audio.crossOrigin = null;
 
-                    await setAudioSrc(audio, url);
+                    // Force the src and load
+                    audio.src = url;
+                    audio.load();
 
+                    // We wrap the audio.play() in an attempt to catch synchronous errors
+                    await new Promise<void>((resolve, reject) => {
+                        const onCanPlay = async () => {
+                            audio.removeEventListener('canplay', onCanPlay);
+                            audio.removeEventListener('error', onErr);
+                            try {
+                                audio.playbackRate = playbackSpeed;
+                                await audio.play();
+                                resolve();
+                            } catch (e) { reject(e); }
+                        };
+                        const onErr = () => {
+                            audio.removeEventListener('canplay', onCanPlay);
+                            audio.removeEventListener('error', onErr);
+                            reject(new Error(audio.error?.message || 'MediaError'));
+                        };
+                        audio.addEventListener('canplay', onCanPlay);
+                        audio.addEventListener('error', onErr);
+                    });
                     if (!cancelled) {
                         setIsPlaying(true); setIsLoading(false); isLoadingRef.current = false;
-                        console.log('[Player] ✓ Play started');
+                        console.log('[Player] ✓ Phát nhạc thành công');
                         return;
                     }
                 } catch (e: any) {
                     if (cancelled) return;
-                    console.warn(`[Player] Failed:`, e.message);
+                    console.warn(`[Player] Nguồn lỗi:`, e.message);
                 }
             }
 
-            // --- Last Resort: fetch() → Blob URL ---
-            if (apiKey) {
-                try {
-                    if (cancelled) return;
-                    console.log('[Player] Fallback: fetch binary -> blob...');
-                    abortCtrl = new AbortController();
-                    const mediaUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}&supportsAllDrives=true`;
-
-                    const res = await fetch(mediaUrl, {
-                        signal: abortCtrl.signal,
-                        redirect: 'follow',
-                    });
-
-                    if (res.ok) {
-                        const contentType = res.headers.get('content-type') || 'audio/mpeg';
-                        if (!contentType.includes('text/html')) {
-                            const buffer = await res.arrayBuffer();
-                            if (!cancelled) {
-                                const blob = new Blob([buffer], { type: contentType });
-                                if (blobUrl) URL.revokeObjectURL(blobUrl);
-                                blobUrl = URL.createObjectURL(blob);
-                                audio.crossOrigin = null;
-                                await setAudioSrc(audio, blobUrl);
-                                setIsPlaying(true); setIsLoading(false); isLoadingRef.current = false;
-                                return;
-                            }
-                        }
-                    }
-                } catch (e: any) {
-                    console.error('[Player] All strategies failed:', e.message);
-                }
+            // Fallback cuối cùng: Thử dùng proxy công cộng nếu tất cả đều thất bại (tùy chọn)
+            // Ở đây chúng ta tạm thời chỉ báo lỗi nếu 3 nguồn trên đều tịt
+            if (!cancelled) {
+                console.error('[Player] ✗ Không thể phát bài này. Có thể file quá lớn hoặc quyền truy cập bị chặn.');
             }
 
             if (!cancelled) {
@@ -235,7 +225,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         if (currentTrack) fetchAndPlay();
         return () => {
             cancelled = true;
-            abortCtrl?.abort();
+            if (abortCtrl) abortCtrl.abort();
             if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
         };
     }, [currentTrack]);
