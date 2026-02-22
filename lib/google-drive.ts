@@ -58,7 +58,15 @@ function driveUrl(endpoint: string, params: Record<string, string> = {}): string
 /** List all playlist folders inside the root folder */
 export async function getPlaylists(): Promise<Playlist[]> {
     const folderId = getRootFolderId();
-    if (!folderId || !getApiKey()) throw new Error('Missing NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID or NEXT_PUBLIC_GOOGLE_API_KEY');
+    const apiKey = getApiKey();
+
+    // Debug: log env var status (safe since Drive folder is public anyway)
+    console.log('[Drive] Folder ID:', folderId ? `${folderId.substring(0, 8)}...` : 'EMPTY');
+    console.log('[Drive] API Key:', apiKey ? `${apiKey.substring(0, 8)}...` : 'EMPTY');
+
+    if (!folderId || !apiKey) {
+        throw new Error('Missing NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID or NEXT_PUBLIC_GOOGLE_API_KEY');
+    }
 
     const query = `'${folderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
     const url = driveUrl('/files', {
