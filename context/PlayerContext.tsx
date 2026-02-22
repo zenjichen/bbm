@@ -123,17 +123,23 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         const fetchAndPlay = async () => {
             const audio = audioRef.current;
             if (!audio || !currentTrack) return;
-            setIsLoading(true); isLoadingRef.current = true;
+            setIsLoading(true);
+            isLoadingRef.current = true;
             try {
-                const streamUrl = currentTrack.stream_url || `/api/stream/${encodeURIComponent(currentTrack.file_id)}`;
+                const streamUrl = currentTrack.stream_url ||
+                    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(currentTrack.file_id)}?alt=media&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY || ''}`;
+                // Must set src then call load() before play() for reliable cross-origin audio
                 audio.src = streamUrl;
+                audio.load();
                 audio.playbackRate = playbackSpeed;
                 await audio.play();
                 setIsPlaying(true);
             } catch (error: any) {
-                if (error.name === 'NotAllowedError') setIsPlaying(false);
+                console.error('[Player] Play error:', error.name, error.message);
+                if (error.name !== 'AbortError') setIsPlaying(false);
             } finally {
-                setIsLoading(false); isLoadingRef.current = false;
+                setIsLoading(false);
+                isLoadingRef.current = false;
             }
         };
         if (currentTrack) fetchAndPlay();
