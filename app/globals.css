@@ -1238,3 +1238,10 @@ body {
 .track-table-header .track-duration {
   font-size: 12px;
 }
+
+/* ==================== Spinner ==================== */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

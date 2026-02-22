@@ -3,19 +3,23 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from "react";
 
 export interface Track {
-    id: number;
-    file_id: string;
+    id: string | number;      // Drive file ID or legacy numeric id
+    file_id: string;          // Drive file ID (used for streaming)
     file_unique_id?: string;
+    name?: string;            // Original filename
     title: string | null;
     performer: string | null;
     duration: number;
     file_size?: number;
     mime_type?: string;
-    topic_id?: number | null;
+    topic_id?: string | number | null; // Drive folder ID (string) or legacy number
+    playlist_id?: string;     // Drive folder ID
     message_id?: number;
     chat_id?: string;
     date?: number;
     thumbnail?: string | null;
+    /** Public Google Drive stream URL — browser plays directly, no proxy */
+    stream_url?: string;
 }
 
 export interface TopicInfo {
@@ -158,8 +162,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             isLoadingRef.current = true;
 
             try {
-                // Use our server-side proxy to avoid exposing bot token
-                const streamUrl = `/api/stream/${encodeURIComponent(currentTrack.file_id)}`;
+                // Use stream_url (direct Google Drive public URL) if available
+                // Fallback to /api/stream proxy for backward compatibility
+                const streamUrl = currentTrack.stream_url
+                    || `/api/stream/${encodeURIComponent(currentTrack.file_id)}`;
                 audio.src = streamUrl;
                 await audio.play();
                 setIsPlaying(true);

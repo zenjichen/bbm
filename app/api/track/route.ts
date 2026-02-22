@@ -1,56 +1,70 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { getPlaylists, getTracksInPlaylist, getAllTracks } from '@/lib/google-drive';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * GET /api/track
+ * Query params:
+ *   q       - search term (title or performer)
+ *   topic   - playlist folder ID to filter
+ *   limit   - max tracks to return (default 500)
+ */
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('q');
-    const topicId = searchParams.get('topic');
-    const limit = parseInt(searchParams.get('limit') || '200');
+    const playlistId = searchParams.get('topic'); // 'topic' kept for UI compatibility
+    const limit = parseInt(searchParams.get('limit') || '500');
 
     try {
-        const tracksPath = path.resolve(process.cwd(), 'data/tracks.json');
-        const topicsPath = path.resolve(process.cwd(), 'data/topics.json');
+        let tracks;
+        let topics;
 
-        // Load tracks
-        let tracks: any[] = [];
-        if (fs.existsSync(tracksPath)) {
-            tracks = JSON.parse(fs.readFileSync(tracksPath, 'utf8'));
+        if (playlistId) {
+            // Fetch tracks for a specific playlist
+            const [playlistTracks, playlists] = await Promise.all([
+                getTracksInPlaylist(playlistId),
+                getPlaylists(),
+            ]);
+            tracks = playlistTracks;
+            topics = playlists.map(pl => ({ id: pl.id, name: pl.name }));
+        } else {
+            // Fetch all playlists and tracks
+            const { playlists, tracks: allTracks } = await getAllTracks();
+            tracks = allTracks;
+            topics = playlists.map(pl => ({ id: pl.id, name: pl.name, trackCount: pl.trackCount }));
         }
 
-        // Load topics
-        let topics: any[] = [];
-        if (fs.existsSync(topicsPath)) {
-            topics = JSON.parse(fs.readFileSync(topicsPath, 'utf8'));
-        }
+        // Convert Drive track to UI-compatible format
+        // Map playlist_id → topic_id (string-based now)
+        let uiTracks = tracks.map(t => ({
+            ...t,
+            topic_id: t.playlist_id, // UI still uses topic_id
+        }));
 
-        // Filter by topic
-        if (topicId) {
-            const tid = parseInt(topicId);
-            tracks = tracks.filter(t => t.topic_id === tid);
-        }
-
-        // Search filter
+        // Filter by search query
         if (search) {
             const q = search.toLowerCase();
-            tracks = tracks.filter(t =>
+            uiTracks = uiTracks.filter(t =>
                 (t.title && t.title.toLowerCase().includes(q)) ||
-                (t.performer && t.performer.toLowerCase().includes(q))
+                (t.performer && t.performer.toLowerCase().includes(q)) ||
+                (t.name && t.name.toLowerCase().includes(q))
             );
         }
 
-        // Sort by date desc
-        tracks.sort((a, b) => (b.date || 0) - (a.date || 0));
+        // Sort by date descending
+        uiTracks.sort((a, b) => (b.date || 0) - (a.date || 0));
 
         return NextResponse.json({
-            tracks: tracks.slice(0, limit),
+            tracks: uiTracks.slice(0, limit),
             topics,
-            total: tracks.length
+            total: uiTracks.length,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Track API error:', error);
-        return NextResponse.json({ error: 'Failed to fetch tracks' }, { status: 500 });
+        return NextResponse.json(
+            { error: error.message || 'Failed to fetch tracks from Google Drive' },
+            { status: 500 }
+        );
     }
 }

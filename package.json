@@ -4,12 +4,9 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
-        "build": "node scripts/fetch-tracks.js && next build",
+        "build": "next build",
         "start": "next start",
-        "lint": "next lint",
-        "fetch": "node scripts/fetch-tracks.js",
-        "fetch:from": "node scripts/fetch-tracks.js --from",
-        "bot": "node scripts/bot.js"
+        "lint": "next lint"
     },
     "dependencies": {
         "next": "14.1.0",

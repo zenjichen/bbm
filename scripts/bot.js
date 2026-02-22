@@ -117,24 +117,65 @@ async function poll() {
         const result = await apiCall('getUpdates', {
             offset,
             timeout: 30,
-            allowed_updates: JSON.stringify(['message', 'channel_post'])
+            allowed_updates: JSON.stringify([
+                'message', 'channel_post',
+                'edited_message', 'edited_channel_post'
+            ])
         });
 
         if (result && result.ok && result.result.length > 0) {
             for (const update of result.result) {
                 offset = update.update_id + 1;
 
-                const msg = update.message || update.channel_post;
+                // Handle regular messages and edits
+                const msg = update.message || update.channel_post ||
+                    update.edited_message || update.edited_channel_post;
+
                 if (!msg) continue;
 
-                // Handle audio messages
+                // 1. Handle Audio (New or Edited)
                 if (msg.audio) {
-                    saveTrack(msg);
+                    // Start by trying to update existing track (for edits)
+                    const existingIndex = tracks.findIndex(t => t.file_unique_id === msg.audio.file_unique_id);
+                    const topicId = msg.message_thread_id || null;
+
+                    if (existingIndex !== -1) {
+                        // Update existing local track with topic info if missing
+                        const track = tracks[existingIndex];
+                        let changed = false;
+
+                        if (topicId && track.topic_id !== topicId) {
+                            track.topic_id = topicId;
+                            console.log(`  🔄 Updated Topic for: "${track.title}" -> Topic ${topicId}`);
+                            changed = true;
+                        }
+
+                        // Also update messge_id if completely new message
+                        // (Not typically needed for edits, but good for sync)
+
+                        if (changed) {
+                            fs.writeFileSync(tracksPath, JSON.stringify(tracks, null, 2));
+                        }
+                    } else {
+                        // New track logic
+                        saveTrack(msg);
+                    }
                 }
 
-                // Handle topic creation
+                // 2. Handle Topic Creation / Edit
+                // Note: 'forum_topic_created/edited' are service messages inside 'message'
                 if (msg.forum_topic_created) {
-                    handleTopicCreated(msg);
+                    const id = msg.message_thread_id;
+                    const name = msg.forum_topic_created.name;
+                    upsertTopic(id, name);
+                }
+
+                if (msg.forum_topic_edited) {
+                    const id = msg.message_thread_id;
+                    const name = msg.forum_topic_edited.name;
+                    if (name) { // could be icon edit
+                        upsertTopic(id, name);
+                    }
                 }
             }
         }
@@ -144,6 +185,21 @@ async function poll() {
 
     // Continue polling
     setTimeout(poll, 500);
+}
+
+function upsertTopic(id, name) {
+    const idx = topics.findIndex(t => t.id === id);
+    if (idx >= 0) {
+        if (topics[idx].name !== name) {
+            topics[idx].name = name;
+            console.log(`  ✏️  Renamed topic ${id} -> "${name}"`);
+            fs.writeFileSync(topicsPath, JSON.stringify(topics, null, 2));
+        }
+    } else {
+        topics.push({ id, name });
+        console.log(`  bm  New topic detected: "${name}" (ID: ${id})`);
+        fs.writeFileSync(topicsPath, JSON.stringify(topics, null, 2));
+    }
 }
 
 // Main

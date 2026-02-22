@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 interface TopicGridProps {
-    topics: { id: number; name: string; trackCount?: number }[];
+    topics: { id: string | number; name: string; trackCount?: number }[];
 }
 
 const TOPIC_EMOJIS = ['🎵', '🎸', '🎹', '🎧', '🎤', '🎺', '🎻', '🥁', '🪗', '🎼'];

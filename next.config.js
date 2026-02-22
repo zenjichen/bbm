@@ -1,18 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: 'export',           // Static HTML export for GitHub Pages
+    trailingSlash: true,        // Required for GitHub Pages routing
+    basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
     images: {
-        domains: ['api.telegram.org'],
+        unoptimized: true,      // Required for static export
+        domains: ['lh3.googleusercontent.com', 'drive.google.com'],
     },
     eslint: {
-        // Warning: This allows production builds to successfully complete even if
-        // your project has ESLint errors.
         ignoreDuringBuilds: true,
     },
     typescript: {
-        // !! WARN !!
-        // Dangerously allow production builds to successfully complete even if
-        // your project has type errors.
-        // !! WARN !!
         ignoreBuildErrors: true,
     },
 }
