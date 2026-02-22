@@ -124,6 +124,96 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         let blobUrl: string | null = null;
         let abortCtrl: AbortController | null = null;
 
+        /**
+         * Thử phát nhạc qua fetch → Blob URL.
+         * Nếu fetch thành công (proxy API hoặc CORS-friendly URL), tạo Blob URL.
+         */
+        const tryFetchBlob = async (
+            audio: HTMLAudioElement,
+            url: string,
+            label: string
+        ): Promise<boolean> => {
+            if (cancelled) return false;
+            console.log(`[Player] Đang thử (fetch): ${label}`);
+
+            abortCtrl = new AbortController();
+            const response = await fetch(url, { signal: abortCtrl.signal });
+            if (cancelled) return false;
+
+            if (!response.ok) {
+                console.warn(`[Player] ${label}: HTTP ${response.status}`);
+                return false;
+            }
+
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('text/html')) {
+                console.warn(`[Player] ${label}: Nhận HTML (virus scan page) → bỏ qua`);
+                return false;
+            }
+
+            const blob = await response.blob();
+            if (cancelled) return false;
+
+            if (blob.size < 1000) {
+                const text = await blob.text();
+                if (text.includes('<html') || text.includes('<!DOCTYPE')) {
+                    console.warn(`[Player] ${label}: Response chứa HTML → bỏ qua`);
+                    return false;
+                }
+            }
+
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+            const audioBlob = new Blob([blob], {
+                type: contentType.includes('audio') ? contentType : 'audio/mpeg',
+            });
+            blobUrl = URL.createObjectURL(audioBlob);
+
+            audio.crossOrigin = null;
+            audio.src = blobUrl;
+            audio.load();
+
+            await new Promise<void>((resolve, reject) => {
+                const onCanPlay = () => { audio.removeEventListener('canplay', onCanPlay); audio.removeEventListener('error', onErr); resolve(); };
+                const onErr = () => { audio.removeEventListener('canplay', onCanPlay); audio.removeEventListener('error', onErr); reject(new Error(audio.error?.message || 'Audio load error')); };
+                audio.addEventListener('canplay', onCanPlay);
+                audio.addEventListener('error', onErr);
+            });
+
+            return true;
+        };
+
+        /**
+         * Thử phát nhạc bằng cách gán URL trực tiếp vào audio.src.
+         * Cách này không bị CORS vì audio element dùng no-cors mode.
+         */
+        const tryDirectSrc = async (
+            audio: HTMLAudioElement,
+            url: string,
+            label: string,
+            timeoutMs = 15000
+        ): Promise<boolean> => {
+            if (cancelled) return false;
+            console.log(`[Player] Đang thử (direct): ${label}`);
+
+            audio.crossOrigin = null;
+            audio.src = url;
+            audio.load();
+
+            await new Promise<void>((resolve, reject) => {
+                const timer = setTimeout(() => {
+                    audio.removeEventListener('canplay', onCanPlay);
+                    audio.removeEventListener('error', onErr);
+                    reject(new Error('Timeout'));
+                }, timeoutMs);
+                const onCanPlay = () => { clearTimeout(timer); audio.removeEventListener('canplay', onCanPlay); audio.removeEventListener('error', onErr); resolve(); };
+                const onErr = () => { clearTimeout(timer); audio.removeEventListener('canplay', onCanPlay); audio.removeEventListener('error', onErr); reject(new Error(audio.error?.message || 'Format error')); };
+                audio.addEventListener('canplay', onCanPlay);
+                audio.addEventListener('error', onErr);
+            });
+
+            return true;
+        };
+
         const fetchAndPlay = async () => {
             const audio = audioRef.current;
             if (!audio || !currentTrack) return;
@@ -132,131 +222,90 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
             const fileId = currentTrack.file_id || String(currentTrack.id);
             const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
+            const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
             /**
-             * CHIẾN LƯỢC PHÁT NHẠC:
-             * 1. Dùng fetch() để tải dữ liệu audio thành Blob
-             * 2. Kiểm tra content-type - nếu là HTML thì đó là trang cảnh báo virus → bỏ qua
-             * 3. Tạo Blob URL rồi gán vào audio.src
-             * Cách này tránh được lỗi MEDIA_ELEMENT_ERROR: Format error
+             * CHIẾN LƯỢC PHÁT NHẠC (theo thứ tự ưu tiên):
+             *
+             * 1. API Proxy (same-origin, không CORS, không virus scan)
+             *    - Chỉ hoạt động khi deploy trên Vercel (có server-side)
+             *
+             * 2. Direct audio.src với Google API URL
+             *    - Không bị CORS (audio element dùng no-cors mode)
+             *    - Có thể bị Format error nếu file lớn (virus scan HTML)
+             *
+             * 3. Direct audio.src với Google UC URL
+             *    - Fallback cuối cùng
              */
-            const urlsToTry: { url: string; label: string }[] = [];
 
+            const strategies: Array<{ fn: () => Promise<boolean>; label: string }> = [];
+
+            // ── Chiến lược 1: API Proxy (ưu tiên cao nhất) ──
+            strategies.push({
+                label: 'API Proxy',
+                fn: () => tryFetchBlob(
+                    audio,
+                    `${basePath}/api/stream?id=${encodeURIComponent(fileId)}`,
+                    'API Proxy (server-side)'
+                ),
+            });
+
+            // ── Chiến lược 2: Direct Google API URL ──
             if (apiKey) {
-                urlsToTry.push({
-                    url: `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}&acknowledgeAbuse=true&supportsAllDrives=true`,
-                    label: 'Google API (acknowledgeAbuse)',
-                });
-                urlsToTry.push({
-                    url: `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`,
-                    label: 'Google API (standard)',
+                strategies.push({
+                    label: 'Google API Direct',
+                    fn: () => tryDirectSrc(
+                        audio,
+                        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`,
+                        'Google API (direct audio.src)'
+                    ),
                 });
             }
 
-            // UC link cuối cùng (thường bị CORS nhưng để dự phòng)
-            urlsToTry.push({
-                url: `https://drive.google.com/uc?id=${fileId}&export=download&confirm=t`,
-                label: 'Google UC (fallback)',
+            // ── Chiến lược 3: Direct UC URL ──
+            strategies.push({
+                label: 'Google UC Direct',
+                fn: () => tryDirectSrc(
+                    audio,
+                    `https://drive.google.com/uc?id=${fileId}&export=download&confirm=t`,
+                    'Google UC (direct audio.src)'
+                ),
             });
 
-            for (const { url, label } of urlsToTry) {
+            // ── Chiến lược 4: drive.usercontent.google.com ──
+            strategies.push({
+                label: 'Google Content Direct',
+                fn: () => tryDirectSrc(
+                    audio,
+                    `https://drive.usercontent.google.com/download?id=${fileId}&export=download&authuser=0&confirm=t`,
+                    'Google Content (direct audio.src)'
+                ),
+            });
+
+            for (const { fn, label } of strategies) {
                 if (cancelled) return;
-                console.log(`[Player] Đang thử nguồn: ${label}`);
-
                 try {
-                    // ── Bước 1: Fetch dữ liệu audio ──
-                    abortCtrl = new AbortController();
-                    const response = await fetch(url, {
-                        signal: abortCtrl.signal,
-                    });
-
-                    if (cancelled) return;
-
-                    if (!response.ok) {
-                        console.warn(`[Player] ${label}: HTTP ${response.status}`);
-                        continue;
+                    const success = await fn();
+                    if (success && !cancelled) {
+                        audio.playbackRate = playbackSpeed;
+                        await audio.play();
+                        setIsPlaying(true);
+                        setIsLoading(false);
+                        isLoadingRef.current = false;
+                        console.log(`[Player] ✓ Phát nhạc thành công qua ${label}!`);
+                        return;
                     }
-
-                    // ── Bước 2: Kiểm tra content-type ──
-                    const contentType = response.headers.get('content-type') || '';
-                    console.log(`[Player] ${label}: content-type = ${contentType}`);
-
-                    // Nếu nhận về HTML → đây là trang cảnh báo virus, bỏ qua
-                    if (contentType.includes('text/html')) {
-                        console.warn(`[Player] ${label}: Nhận HTML (trang cảnh báo virus) → bỏ qua`);
-                        continue;
-                    }
-
-                    // ── Bước 3: Tạo Blob URL ──
-                    const blob = await response.blob();
-                    if (cancelled) return;
-
-                    if (blob.size < 1000) {
-                        // File quá nhỏ, có thể là error page
-                        const text = await blob.text();
-                        if (text.includes('<html') || text.includes('<!DOCTYPE')) {
-                            console.warn(`[Player] ${label}: Blob quá nhỏ và chứa HTML → bỏ qua`);
-                            continue;
-                        }
-                    }
-
-                    // Revoke URL cũ nếu có
-                    if (blobUrl) {
-                        URL.revokeObjectURL(blobUrl);
-                    }
-
-                    // Tạo blob với đúng mime type
-                    const audioBlob = new Blob([blob], {
-                        type: contentType.includes('audio') ? contentType : 'audio/mpeg',
-                    });
-                    blobUrl = URL.createObjectURL(audioBlob);
-
-                    // ── Bước 4: Gán Blob URL vào audio và phát ──
-                    await new Promise<void>((resolve, reject) => {
-                        const onCanPlay = () => {
-                            audio.removeEventListener('canplay', onCanPlay);
-                            audio.removeEventListener('error', onErr);
-                            resolve();
-                        };
-                        const onErr = () => {
-                            audio.removeEventListener('canplay', onCanPlay);
-                            audio.removeEventListener('error', onErr);
-                            reject(new Error(audio.error?.message || `MediaError code ${audio.error?.code}`));
-                        };
-
-                        audio.addEventListener('canplay', onCanPlay);
-                        audio.addEventListener('error', onErr);
-
-                        audio.crossOrigin = null;
-                        audio.src = blobUrl!;
-                        audio.load();
-                    });
-
-                    if (cancelled) return;
-                    audio.playbackRate = playbackSpeed;
-                    await audio.play();
-                    setIsPlaying(true);
-                    setIsLoading(false);
-                    isLoadingRef.current = false;
-                    console.log(`[Player] ✓ Phát nhạc thành công qua ${label}!`);
-                    return; // Thành công, không cần thử nguồn khác
-
                 } catch (e: any) {
                     if (cancelled) return;
                     if (e.name === 'AbortError') return;
                     console.warn(`[Player] ${label} lỗi:`, e.message);
-                    // Revoke blob URL thất bại
-                    if (blobUrl) {
-                        URL.revokeObjectURL(blobUrl);
-                        blobUrl = null;
-                    }
+                    if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
                 }
             }
 
-            // Tất cả nguồn đều thất bại
             if (!cancelled) {
-                console.error('[Player] ✗ Không thể phát bài này. Tất cả nguồn đều thất bại.');
-                console.error('[Player] Kiểm tra: 1) API Key hợp lệ 2) File được chia sẻ công khai 3) File tồn tại');
+                console.error('[Player] ✗ Không thể phát bài này.');
+                console.error('[Player] Gợi ý: Deploy app trên Vercel để dùng API Proxy (giải quyết CORS + virus scan)');
                 setIsPlaying(false);
                 setIsLoading(false);
                 isLoadingRef.current = false;

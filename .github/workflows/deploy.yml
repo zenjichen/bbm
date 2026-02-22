@@ -37,6 +37,7 @@ jobs:
       - name: Build Next.js static export
         run: npm run build
         env:
+          STATIC_EXPORT: 'true'
           # These are embedded into the JS bundle at build time
           NEXT_PUBLIC_GOOGLE_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_API_KEY }}
           NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID }}
