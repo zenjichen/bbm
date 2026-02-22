@@ -120,35 +120,61 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }, [currentTrack, playlist, isShuffle, repeatMode]);
 
     useEffect(() => {
+        let cancelled = false;
+
+        const tryPlay = async (audio: HTMLAudioElement, url: string): Promise<void> => {
+            audio.pause();
+            audio.src = url;
+            audio.playbackRate = playbackSpeed;
+            await new Promise(r => setTimeout(r, 30));
+            if (cancelled) return;
+            await audio.play();
+        };
+
         const fetchAndPlay = async () => {
             const audio = audioRef.current;
             if (!audio || !currentTrack) return;
             setIsLoading(true);
             isLoadingRef.current = true;
+
+            const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
+            const fileId = currentTrack.file_id || String(currentTrack.id);
+
+            // Primary URL: Drive API v3 (correct for API-key auth)
+            const primaryUrl = currentTrack.stream_url ||
+                `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}`;
+
+            // Fallback URL: public uc export (no API key needed for public files)
+            const fallbackUrl = `https://drive.google.com/uc?export=open&id=${encodeURIComponent(fileId)}`;
+
             try {
-                const streamUrl = currentTrack.stream_url ||
-                    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(currentTrack.file_id)}?alt=media&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY || ''}`;
-                // Must set src then call load() before play() for reliable cross-origin audio
-                audio.src = streamUrl;
-                audio.load();
-                audio.playbackRate = playbackSpeed;
-                await audio.play();
-                setIsPlaying(true);
-            } catch (error: any) {
-                console.error('[Player] Play error:', error.name, error.message);
-                if (error.name !== 'AbortError') setIsPlaying(false);
+                await tryPlay(audio, primaryUrl);
+                if (!cancelled) setIsPlaying(true);
+            } catch (err1: any) {
+                if (cancelled || err1.name === 'AbortError') return;
+                console.warn('[Player] Primary URL failed, trying fallback:', err1.name);
+                try {
+                    await tryPlay(audio, fallbackUrl);
+                    if (!cancelled) setIsPlaying(true);
+                } catch (err2: any) {
+                    if (cancelled || err2.name === 'AbortError') return;
+                    console.error('[Player] Both URLs failed:', err2.name, err2.message);
+                    if (!cancelled) setIsPlaying(false);
+                }
             } finally {
-                setIsLoading(false);
-                isLoadingRef.current = false;
+                if (!cancelled) { setIsLoading(false); isLoadingRef.current = false; }
             }
         };
+
         if (currentTrack) fetchAndPlay();
+        return () => { cancelled = true; };
     }, [currentTrack]);
+
 
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio || !currentTrack || isLoadingRef.current) return;
-        if (isPlaying) { audio.play().catch(() => setIsPlaying(false)); }
+        if (isPlaying) { audio.play().catch(e => { if (e.name !== 'AbortError') setIsPlaying(false); }); }
         else { audio.pause(); }
     }, [isPlaying]);
 
