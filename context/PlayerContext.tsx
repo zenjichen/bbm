@@ -245,9 +245,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
              * 3-4. UC URL fallbacks
              */
 
-            // ── Xây dựng URL proxy (absolute nếu có vercelApiUrl, ngược lại relative) ──
+            // ── Xây dựng URL proxy ──
+            // - proxyBase có giá trị: gọi Vercel cross-origin (GitHub Pages → Vercel)
+            //   không dùng basePath vì Vercel deploy ở root (/api/stream), không có /bbm prefix
+            // - proxyBase rỗng: gọi same-origin (chạy trên Vercel) → dùng basePath bình thường
             const proxyBase = vercelApiUrl || '';
-            const proxyCheckUrl = `${proxyBase}${basePath}/api/stream?id=ping_check`;
+            const proxyCheckUrl = proxyBase
+                ? `${proxyBase}/api/stream?id=ping_check`
+                : `${basePath}/api/stream?id=ping_check`;
 
             // ── Kiểm tra nhanh: API Proxy có tồn tại không? ──
             let proxyAvailable = false;
@@ -272,7 +277,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
             // ── Chiến lược 1: API Proxy (chỉ thử nếu server tồn tại và không bị block) ──
             if (proxyAvailable) {
-                const proxyStreamUrl = `${proxyBase}${basePath}/api/stream?id=${encodeURIComponent(fileId)}`;
+                // Cross-origin Vercel: chỉ dùng proxyBase (không có /bbm)
+                // Same-origin Vercel: dùng basePath
+                const proxyStreamUrl = proxyBase
+                    ? `${proxyBase}/api/stream?id=${encodeURIComponent(fileId)}`
+                    : `${basePath}/api/stream?id=${encodeURIComponent(fileId)}`;
                 strategies.push({
                     label: 'API Proxy',
                     fn: () => tryFetchBlob(
