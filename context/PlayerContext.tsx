@@ -172,6 +172,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
                 // Small timeout to let the media engine reset
                 setTimeout(() => {
+                    // Force the browser to treat it as a media stream
                     audio.src = url;
                     audio.load();
                 }, 50);
@@ -189,19 +190,23 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             const fileId = currentTrack.file_id || String(currentTrack.id);
 
             // Primary URL: Drive API v3 (correct for API-key auth)
+            // supportsAllDrives=true ensures we can access shared drives if needed
             const primaryUrl = currentTrack.stream_url ||
-                `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}`;
+                `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}&supportsAllDrives=true`;
 
-            // Fallback 1: UC Export (Open)
-            const fallback1 = `https://drive.google.com/uc?export=open&id=${encodeURIComponent(fileId)}`;
+            // Fallback 1: Direct link (sometimes works better with certain file types)
+            const fallback1 = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}`;
 
-            // Fallback 2: UC Export (Download) - often bypasses some restrictions
-            const fallback2 = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+            // Fallback 2: UC Export (Open)
+            const fallback2 = `https://drive.google.com/uc?export=open&id=${encodeURIComponent(fileId)}`;
 
-            // Fallback 3: Docs UC
-            const fallback3 = `https://docs.google.com/uc?id=${encodeURIComponent(fileId)}&export=download`;
+            // Fallback 3: UC Export (Download) - often bypasses some restrictions
+            const fallback3 = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
 
-            const urls = [primaryUrl, fallback1, fallback2, fallback3];
+            // Fallback 4: Docs UC
+            const fallback4 = `https://docs.google.com/uc?id=${encodeURIComponent(fileId)}&export=download`;
+
+            const urls = [primaryUrl, fallback1, fallback2, fallback3, fallback4];
 
             for (const url of urls) {
                 if (cancelled) break;

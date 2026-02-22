@@ -2,12 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ================================================================
-   BBM Music — Premium Dark Design System v2
-   Font: Space Grotesk (display) + Inter (body)
-   ================================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+/* BBM Music */
 
 :root {
   /* ── Core Surfaces ── */
@@ -73,10 +68,7 @@
   --slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ================================================================
-   Reset + Base
-   ================================================================ */
-*,
+/* Reset+Base */
 *::before,
 *::after {
   box-sizing: border-box;
@@ -117,9 +109,8 @@ body {
   background: #2e2e6a;
 }
 
-/* ================================================================
-   Background
-   ================================================================ */
+/* Background */
+
 /* Global Background for Now Playing */
 .global-player-bg {
   position: fixed;
@@ -153,15 +144,13 @@ body[data-playing="true"] .app-layout {
   opacity: 0.8;
 }
 
-/* ================================================================
-   Layout
-   ================================================================ */
-.app-layout {
+Layout .app-layout {
   position: relative;
   z-index: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .app-container {
@@ -176,9 +165,8 @@ body[data-playing="true"] .app-layout {
   padding-bottom: calc(var(--player-h) + 40px);
 }
 
-/* ================================================================
-   Navbar
-   ================================================================ */
+/* Navbar */
+
 /* ── Navbar ── */
 .navbar {
   height: 65px;
@@ -369,10 +357,7 @@ body[data-playing="true"] .navbar {
   color: var(--accent-light);
 }
 
-/* ================================================================
-   Hero
-   ================================================================ */
-.hero-section {
+Hero .hero-section {
   padding: 56px 0 40px;
   text-align: center;
 }
@@ -417,10 +402,7 @@ body[data-playing="true"] .navbar {
   line-height: 1.65;
 }
 
-/* ================================================================
-   Section Headers
-   ================================================================ */
-.section-header {
+Section Headers .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -464,10 +446,7 @@ body[data-playing="true"] .navbar {
   background: var(--accent-glow);
 }
 
-/* ================================================================
-   Topic Tabs — "Gồ ghề" style
-   ================================================================ */
-.topic-tabs-wrap {
+Topic Tabs — "Gồ ghề" style .topic-tabs-wrap {
   position: relative;
   margin-bottom: 36px;
 }
@@ -571,10 +550,7 @@ body[data-playing="true"] .navbar {
   pointer-events: none;
 }
 
-/* ================================================================
-   Track List
-   ================================================================ */
-.track-list {
+Track List .track-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -783,10 +759,7 @@ body[data-playing="true"] .track-item:not(.active):hover {
   height: 4px;
 }
 
-/* ================================================================
-   Player Bar
-   ================================================================ */
-.player-bar {
+Player Bar .player-bar {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -993,10 +966,7 @@ body[data-playing="true"] .track-item:not(.active):hover {
   cursor: pointer;
 }
 
-/* ================================================================
-   Progress Bar
-   ================================================================ */
-.pb-wrap {
+Progress Bar .pb-wrap {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -1086,10 +1056,7 @@ body[data-playing="true"] .track-item:not(.active):hover {
   font-variant-numeric: tabular-nums;
 }
 
-/* ================================================================
-   CSS Waveform + Canvas Waveform
-   ================================================================ */
-.waveform-container {
+CSS Waveform+Canvas Waveform .waveform-container {
   display: flex;
   align-items: center;
   width: 244px;
@@ -1146,10 +1113,7 @@ body[data-playing="true"] .track-item:not(.active):hover {
   }
 }
 
-/* ================================================================
-   Player Cover (now with thumbnail)
-   ================================================================ */
-.cover-active {
+Player Cover (now with thumbnail) .cover-active {
   animation: coverGlow 3s ease-in-out infinite;
 }
 
@@ -1165,10 +1129,7 @@ body[data-playing="true"] .track-item:not(.active):hover {
   }
 }
 
-/* ================================================================
-   Volume + Speed
-   ================================================================ */
-.vol-wrap {
+Volume+Speed .vol-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1314,10 +1275,7 @@ body[data-playing="true"] .track-item:not(.active):hover {
   box-shadow: 0 0 6px var(--accent);
 }
 
-/* ================================================================
-   Playlist Header (playlist page)
-   ================================================================ */
-.playlist-header {
+Playlist Header (playlist page) .playlist-header {
   display: flex;
   align-items: flex-end;
   gap: 28px;
@@ -1400,10 +1358,7 @@ body[data-playing="true"] .track-item:not(.active):hover {
   box-shadow: 0 6px 30px rgba(124, 58, 237, 0.6);
 }
 
-/* ================================================================
-   Track Table Header
-   ================================================================ */
-.track-table-header {
+Track Table Header .track-table-header {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -1427,10 +1382,7 @@ body[data-playing="true"] .track-item:not(.active):hover {
   width: 44px;
 }
 
-/* ================================================================
-   Empty State
-   ================================================================ */
-.empty-state {
+Empty State .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1467,10 +1419,7 @@ body[data-playing="true"] .track-item:not(.active):hover {
   line-height: 1.6;
 }
 
-/* ================================================================
-   Animations
-   ================================================================ */
-.animate-fade-in {
+Animations .animate-fade-in {
   animation: fadeIn 400ms ease both;
 }
 
@@ -1522,9 +1471,7 @@ body[data-playing="true"] .track-item:not(.active):hover {
   }
 }
 
-/* ================================================================
-   Responsive
-   ================================================================ */
+/* Responsive */
 @media (max-width: 768px) {
   .app-container {
     padding: 0 16px;
@@ -1576,9 +1523,7 @@ body[data-playing="true"] .track-item:not(.active):hover {
   }
 }
 
-/* ================================================================
-   Book Layout (2-column: sidebar + main panel)
-   ================================================================ */
+/* Book Layout (2-column: sidebar + main panel) */
 .book-layout {
   display: flex;
   min-height: calc(100vh - var(--player-h) - 65px);
@@ -1947,10 +1892,7 @@ body[data-playing="true"] .main-panel {
   font-size: 13px;
 }
 
-/* ================================================================
-   PLAYER BAR (Desktop Base - Premium Upgrade)
-   ================================================================ */
-.player-bar {
+PLAYER BAR (Desktop Base - Premium Upgrade) .player-bar {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -2082,6 +2024,8 @@ body[data-playing="true"] .player-cover {
 @media (max-width: 900px) {
   .book-layout {
     flex-direction: column;
+    height: auto;
+    min-height: 0;
   }
 
   .sidebar {
@@ -2097,31 +2041,38 @@ body[data-playing="true"] .player-cover {
     gap: 4px;
     padding: 10px;
     z-index: 50;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 
   .sidebar-header,
   .sidebar-search,
   .sidebar-loading,
   .sidebar-item-count {
-    display: none;
+    display: none !important;
   }
 
   .sidebar-list {
-    flex-direction: row;
+    flex-direction: row !important;
     gap: 8px;
-    overflow-x: auto;
+    padding: 0 5px;
     flex: none;
-    scrollbar-width: none;
+    width: max-content;
+  }
+
+  .sidebar-item {
+    padding: 8px 12px;
+    white-space: nowrap;
   }
 
   .main-panel {
-    padding: 20px;
+    padding: 20px 16px;
     max-height: none;
     overflow-y: visible;
+    box-shadow: none;
   }
 }
 
-<<<<<<< HEAD
 /* Mobile Premium (768px) */
 @media (max-width: 768px) {
   :root {
@@ -2142,29 +2093,16 @@ body[data-playing="true"] .player-cover {
     gap: 0 !important;
     justify-content: space-between !important;
     display: flex !important;
-=======
-@media (max-width: 600px) {
-  .player-inner {
-    padding: 0 12px;
-    gap: 8px;
-    justify-content: center;
->>>>>>> parent of 5afcf8f (feat: major mobile UI overhaul - super-sized progress bar with large hit area, centered stacked controls, and enhanced tactile feedback)
   }
 
   /* Layer 1: Track Info (Top) */
   .player-left {
-<<<<<<< HEAD
     order: 1 !important;
     flex: 0 0 auto !important;
     width: 100% !important;
     justify-content: center !important;
     gap: 12px !important;
     margin-bottom: 10px !important;
-=======
-    flex: 0 0 120px;
-    /* Nhỏ lại cho mobile */
-    gap: 8px;
->>>>>>> parent of 5afcf8f (feat: major mobile UI overhaul - super-sized progress bar with large hit area, centered stacked controls, and enhanced tactile feedback)
   }
 
   .player-cover {
@@ -2174,7 +2112,7 @@ body[data-playing="true"] .player-cover {
   }
 
   .player-text-premium {
-<<<<<<< HEAD
+    display: block !important;
     text-align: left !important;
     max-width: calc(100% - 60px) !important;
   }
@@ -2252,54 +2190,6 @@ body[data-playing="true"] .player-cover {
 
   .track-item {
     padding: 14px 12px !important;
-=======
-    display: none;
-    /* Ẩn text trên mobile cực nhỏ hoặc dùng flex-column */
-  }
-
-  .player-center {
-    flex: 1;
-    max-width: none;
-  }
-
-  .player-buttons-premium {
-    gap: 8px;
-    padding: 4px 8px;
-  }
-
-  .pl-btn-framed {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-  }
-
-  /* Ẩn bớt nút trên mobile để đỡ chật */
-  .pl-btn-framed[title="Shuffle"],
-  .pl-btn-framed[title="Repeat"] {
-    display: none;
-  }
-
-  .pl-play-main-premium {
-    width: 50px;
-    height: 50px;
-  }
-
-  .player-right {
-    flex: 0 0 auto;
-    width: auto;
-  }
-
-  .vol-wrap-aesthetic {
-    display: none;
-    /* Volume capsule quá to cho mobile */
-  }
-
-  /* Hiện icon volume đơn giản thay vì capsule */
-  .player-right::after {
-    content: '🔊';
-    font-size: 18px;
-    opacity: 0.5;
->>>>>>> parent of 5afcf8f (feat: major mobile UI overhaul - super-sized progress bar with large hit area, centered stacked controls, and enhanced tactile feedback)
   }
 }
 
