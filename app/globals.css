@@ -798,84 +798,99 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
+  /* Dành chỗ trên cho progress bar */
+  padding-top: 0;
 }
 
-/* ── Progress Bar ── */
+/* ── Progress Bar (redesigned: to hơn, dễ kéo, không nhầm bài) ── */
 .pb-wrap {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 0 16px;
-  position: absolute;
-  top: -2px;
+  gap: 2px;
+  padding: 10px 24px 0;
+  /* Nằm TRONG player-bar, phía trên controls — không cắm vào mép trên */
+  position: relative;
+  top: 0;
   left: 0;
   right: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+/* Hit area ảo rộng để dễ bắt chuột/chạm */
 .pb-track {
-  height: 3px;
-  background: rgba(255, 255, 255, 0.08);
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
   cursor: pointer;
   position: relative;
-  border-radius: 2px;
-  transition: height 0.15s;
+  border-radius: 6px;
+  transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Mở rộng vùng click theo chiều dọc, tránh ấn nhầm track */
+  padding: 7px 0;
+  margin: -7px 0;
+  box-sizing: content-box;
 }
 
 .pb-track:hover,
 .pb-track.pb-active {
-  height: 5px;
+  height: 10px;
 }
 
 .pb-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent) 0%, var(--accent-light) 100%);
-  border-radius: 2px;
+  border-radius: 6px;
   position: relative;
+  transition: width 0.05s linear;
 }
 
 .pb-glow {
   position: absolute;
-  right: 0;
+  right: -1px;
   top: 50%;
   transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--accent-light);
-  box-shadow: 0 0 8px var(--accent-light);
+  box-shadow: 0 0 10px 2px rgba(167, 139, 250, 0.7);
 }
 
 .pb-thumb {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0 8px rgba(167, 139, 250, 0.6);
+  box-shadow: 0 0 12px rgba(167, 139, 250, 0.8), 0 2px 6px rgba(0, 0, 0, 0.5);
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.15s;
   pointer-events: none;
 }
 
 .pb-track:hover .pb-thumb,
 .pb-track.pb-active .pb-thumb {
   opacity: 1;
+  transform: translate(-50%, -50%) scale(1.15);
 }
 
 .pb-tip {
   position: absolute;
-  bottom: 14px;
+  bottom: 20px;
   transform: translateX(-50%);
-  background: rgba(20, 20, 40, 0.95);
-  border: 1px solid var(--border);
+  background: rgba(15, 15, 30, 0.95);
+  border: 1px solid rgba(124, 58, 237, 0.4);
   color: var(--text-main);
   font-size: 11px;
-  padding: 3px 7px;
-  border-radius: 4px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
   white-space: nowrap;
   pointer-events: none;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .pb-times {
@@ -884,6 +899,7 @@ body {
   font-size: 10px;
   color: var(--text-muted);
   padding: 4px 0 0;
+  letter-spacing: 0.03em;
 }
 
 /* ── Player Inner ── */
@@ -1070,16 +1086,17 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* ── Sync state blur ── */
+/* ── Background thumbnail blur (rõ hơn) ── */
 .global-player-bg {
   position: fixed;
   inset: 0;
   z-index: -1;
   background-size: cover;
   background-position: center;
-  filter: blur(20px) brightness(0.3) saturate(1.8);
+  /* blur thấp hơn → ảnh rõ hơn; brightness cao hơn → sáng hơn; saturate mạnh → màu sắc nổi bật */
+  filter: blur(10px) brightness(0.45) saturate(2.2);
   opacity: 0;
-  transition: opacity 1s ease-in-out;
+  transition: opacity 1.2s ease-in-out;
 }
 
 /* ── Spin ring (loading indicator) ── */
@@ -1264,22 +1281,34 @@ input[type="range"]::-moz-range-thumb {
     display: none;
   }
 
-  /* Progress Bar thin line at the very top of the bar */
+  /* Progress Bar trên mobile — nằm trong player-bar, đủ cao để dễ kéo */
   .pb-wrap {
-    padding: 0;
+    padding: 8px 12px 0;
+    position: relative;
     top: 0;
-    position: absolute;
     width: 100%;
+    box-sizing: border-box;
   }
 
   .pb-track {
-    height: 2px;
-    border-radius: 0;
+    height: 4px;
+    border-radius: 4px;
+    /* Hit area ảo để dễ chạm */
+    padding: 6px 0;
+    margin: -6px 0;
+  }
+
+  .pb-track:hover,
+  .pb-track.pb-active {
+    height: 6px;
   }
 
   .pb-times {
-    display: none;
+    display: flex;
+    font-size: 9px;
+    opacity: 0.6;
   }
+
 
   .sidebar {
     width: 85vw;
