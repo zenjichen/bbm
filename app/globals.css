@@ -275,14 +275,15 @@ body[data-playing="true"] .navbar {
 
 .logo-text {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 28px;
+  /* Tăng kích thước */
   font-weight: 800;
   background: linear-gradient(90deg, #fff, var(--accent-light), #fff);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: logoShimmer 3s linear infinite;
-  letter-spacing: -0.5px;
+  letter-spacing: -1px;
 }
 
 .logo:hover .logo-text {
@@ -1584,6 +1585,11 @@ body[data-playing="true"] .track-item:not(.active):hover {
   border-right: 1px solid var(--border-1);
   padding: 20px 0;
   z-index: 10;
+  transition: background 0.5s ease;
+}
+
+body[data-playing="true"] .sidebar {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.1) 100%);
 }
 
 .sidebar-header {
@@ -1790,6 +1796,13 @@ body[data-playing="true"] .track-item:not(.active):hover {
   position: relative;
   /* Shadow to define the page against the spine */
   box-shadow: -20px 0 30px -20px rgba(0, 0, 0, 0.5) inset;
+  transition: background 0.5s ease;
+}
+
+body[data-playing="true"] .main-panel {
+  background: rgba(7, 7, 26, 0.4);
+  /* Trong suốt để thấy background blur */
+  backdrop-filter: blur(10px);
 }
 
 .main-panel::before {
@@ -2039,176 +2052,263 @@ body[data-playing="true"] .track-item:not(.active):hover {
     flex: 0 0 auto;
   }
 
-  .vol-wrap {
-    display: none;
+  /* Player Text Upgrade */
+  .player-text-premium {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    padding-right: 20px;
   }
 
-  .waveform-container,
-  .wf-canvas,
-  .css-waveform {
-    width: 150px !important;
-    max-width: 150px !important;
+  .player-title-full {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    animation: none;
   }
 
-  .player-buttons {
-    gap: 8px;
+  /* Scroll highlight when clicking title */
+  .scroll-highlight {
+    animation: itemReveal 1s ease;
   }
 
-  .panel-cover {
-    width: 56px;
-    height: 56px;
-    font-size: 26px;
-  }
-}
+  @keyframes itemReveal {
+    0% {
+      background: var(--accent-glow);
+      transform: scale(1.02);
+    }
 
-@media (max-width: 400px) {
-  .player-left .player-text {
-    display: none;
-  }
-
-  .player-cover {
-    width: 40px;
-    height: 40px;
+    100% {
+      background: transparent;
+      transform: scale(1);
+    }
   }
 
-  .waveform-container,
-  .wf-canvas,
-  .css-waveform {
-    width: 110px !important;
-    max-width: 110px !important;
+  .player-artist-premium {
+    font-size: 12px;
+    color: var(--text-secondary);
+    opacity: 0.8;
+    margin-top: 2px;
   }
 
-  .spd-btn {
-    display: none !important;
+  /* Volume Aesthetic Upgrade */
+  .vol-wrap-aesthetic {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(15, 15, 40, 0.6);
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 1px solid var(--border-1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
   }
-}
 
-/* ================================================================
+  .vol-wrap-aesthetic:hover {
+    background: rgba(15, 15, 40, 0.8);
+    border-color: var(--border-acc);
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+  }
+
+  .vol-btn-aesthetic {
+    background: none;
+    border: none;
+    color: var(--accent-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s;
+  }
+
+  .vol-btn-aesthetic:hover {
+    transform: scale(1.1);
+  }
+
+  .vol-slider-aesthetic {
+    width: 100px;
+    height: 4px;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .vol-slider-aesthetic::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .vol-slider-aesthetic::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+    box-shadow: 0 0 15px var(--accent);
+  }
+
+  /* Controls Upgrade */
+  .player-buttons-premium {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(15, 15, 40, 0.4);
+    padding: 8px 20px;
+    border-radius: 30px;
+    border: 1px solid var(--border-1);
+    backdrop-filter: blur(10px);
+  }
+
+  .pl-play-main-premium {
+    width: 64px;
+    height: 64px;
+    background: var(--grad-primary);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .pl-play-main-premium:hover {
+    transform: scale(1.1);
+    box-shadow: 0 15px 40px rgba(124, 58, 237, 0.6);
+  }
+
+
+  /* ================================================================
    PLAYING STATE: Player expands, tracklist shrinks
    Triggered by <body data-playing="true"> via AppStateSync
    ================================================================ */
 
-/* Smooth all layout transitions */
-.player-bar {
-  transition:
-    height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.45s ease,
-    background 0.45s ease,
-    transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.book-layout,
-.sidebar,
-.main-panel {
-  transition:
-    height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-    max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.35s ease;
-}
-
-/* Player expanded state */
-body[data-playing="true"] .player-bar {
-  height: 160px;
-  background:
-    linear-gradient(to top,
-      rgba(124, 58, 237, 0.18) 0%,
-      rgba(7, 7, 26, 0.98) 100%),
-    var(--bg-secondary);
-  box-shadow:
-    0 -8px 48px rgba(124, 58, 237, 0.25),
-    0 -2px 0 rgba(124, 58, 237, 0.5);
-  border-top-color: rgba(124, 58, 237, 0.4);
-}
-
-/* Player cover pulses bigger */
-body[data-playing="true"] .player-cover {
-  width: 100px;
-  height: 100px;
-  transform: translateY(-20px);
-  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow:
-    0 0 0 4px rgba(124, 58, 237, 0.4),
-    0 20px 50px rgba(0, 0, 0, 0.8);
-}
-
-/* Player title becomes more prominent */
-body[data-playing="true"] .player-title {
-  font-size: 15px;
-  color: #fff;
-}
-
-/* Layout shrinks to give player more visual space */
-body[data-playing="true"] .sidebar {
-  height: calc(100vh - 160px - 65px);
-  max-height: calc(100vh - 160px - 65px);
-}
-
-body[data-playing="true"] .main-panel {
-  max-height: calc(100vh - 160px - 65px);
-}
-
-body[data-playing="true"] .book-layout {
-  min-height: calc(100vh - 160px - 65px);
-}
-
-/* Also shrink the sidebar items slightly for visual breathing room */
-body[data-playing="true"] .sidebar-item {
-  padding: 7px 10px;
-}
-
-body[data-playing="true"] .sidebar-item-icon {
-  width: 32px;
-  height: 32px;
-}
-
-/* Play button pulses gently */
-body[data-playing="true"] .pl-play {
-  animation: playPulse 2.5s ease-in-out infinite;
-}
-
-@keyframes playPulse {
-
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 0 rgba(124, 58, 237, 0.6),
-      0 4px 18px rgba(0, 0, 0, 0.4);
+  /* Smooth all layout transitions */
+  .player-bar {
+    transition:
+      height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.45s ease,
+      background 0.45s ease,
+      transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  50% {
-    box-shadow:
-      0 0 0 8px rgba(124, 58, 237, 0),
-      0 4px 18px rgba(0, 0, 0, 0.4);
+  .book-layout,
+  .sidebar,
+  .main-panel {
+    transition:
+      height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+      max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.35s ease;
   }
-}
 
-/* Cover glow pulsing when playing */
-body[data-playing="true"] .cover-active {
-  animation: coverGlow 3s ease-in-out infinite;
-}
-
-/* Progress bar thicker when player is expanded */
-body[data-playing="true"] .pb-track {
-  height: 5px;
-}
-
-/* pb-wrap on bigger player */
-body[data-playing="true"] .pb-wrap {
-  padding: 0;
-}
-
-/* Mobile: player still expands but more compact */
-@media (max-width: 600px) {
+  /* Player expanded state */
   body[data-playing="true"] .player-bar {
-    height: 130px;
+    height: 160px;
+    background:
+      linear-gradient(to top,
+        rgba(124, 58, 237, 0.18) 0%,
+        rgba(7, 7, 26, 0.98) 100%),
+      var(--bg-secondary);
+    box-shadow:
+      0 -8px 48px rgba(124, 58, 237, 0.25),
+      0 -2px 0 rgba(124, 58, 237, 0.5);
+    border-top-color: rgba(124, 58, 237, 0.4);
   }
 
+  /* Player cover pulses bigger */
+  body[data-playing="true"] .player-cover {
+    width: 100px;
+    height: 100px;
+    transform: translateY(-20px);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow:
+      0 0 0 4px rgba(124, 58, 237, 0.4),
+      0 20px 50px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Player title becomes more prominent */
+  body[data-playing="true"] .player-title {
+    font-size: 15px;
+    color: #fff;
+  }
+
+  /* Layout shrinks to give player more visual space */
   body[data-playing="true"] .sidebar {
-    height: auto;
-    max-height: none;
+    height: calc(100vh - 160px - 65px);
+    max-height: calc(100vh - 160px - 65px);
   }
 
   body[data-playing="true"] .main-panel {
-    max-height: none;
+    max-height: calc(100vh - 160px - 65px);
   }
-}
+
+  body[data-playing="true"] .book-layout {
+    min-height: calc(100vh - 160px - 65px);
+  }
+
+  /* Also shrink the sidebar items slightly for visual breathing room */
+  body[data-playing="true"] .sidebar-item {
+    padding: 7px 10px;
+  }
+
+  body[data-playing="true"] .sidebar-item-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Play button pulses gently */
+  body[data-playing="true"] .pl-play {
+    animation: playPulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes playPulse {
+
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 0 rgba(124, 58, 237, 0.6),
+        0 4px 18px rgba(0, 0, 0, 0.4);
+    }
+
+    50% {
+      box-shadow:
+        0 0 0 8px rgba(124, 58, 237, 0),
+        0 4px 18px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  /* Cover glow pulsing when playing */
+  body[data-playing="true"] .cover-active {
+    animation: coverGlow 3s ease-in-out infinite;
+  }
+
+  /* Progress bar thicker when player is expanded */
+  body[data-playing="true"] .pb-track {
+    height: 5px;
+  }
+
+  /* pb-wrap on bigger player */
+  body[data-playing="true"] .pb-wrap {
+    padding: 0;
+  }
+
+  /* Mobile: player still expands but more compact */
+  @media (max-width: 600px) {
+    body[data-playing="true"] .player-bar {
+      height: 130px;
+    }
+
+    body[data-playing="true"] .sidebar {
+      height: auto;
+      max-height: none;
+    }
+
+    body[data-playing="true"] .main-panel {
+      max-height: none;
+    }
+  }
