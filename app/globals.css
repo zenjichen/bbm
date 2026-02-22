@@ -1077,9 +1077,9 @@ input[type="range"]::-moz-range-thumb {
   z-index: -1;
   background-size: cover;
   background-position: center;
-  filter: blur(80px) brightness(0.25) saturate(1.5);
+  filter: blur(130px) brightness(0.4) saturate(2.2);
   opacity: 0;
-  transition: opacity 2s;
+  transition: opacity 1.5s ease-in-out;
 }
 
 /* ── Spin ring (loading indicator) ── */
@@ -1128,13 +1128,13 @@ input[type="range"]::-moz-range-thumb {
 
   /* Tokens */
   :root {
-    --player-h: 86px;
-    /* Tăng để player nổi trông sang hơn */
+    --player-h: 115px;
+    /* Chiều cao đủ để chứa info + nút */
     --navbar-h: 0px;
   }
 
   body {
-    background: #050510;
+    background: #04040a;
   }
 
   .navbar {
@@ -1146,174 +1146,144 @@ input[type="range"]::-moz-range-thumb {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 16px;
-    background: rgba(5, 5, 15, 0.9);
+    padding: 12px 16px;
+    background: rgba(4, 4, 10, 0.95);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(25px);
+    position: sticky;
+    top: 0;
+    z-index: 400;
   }
 
   .mobile-lib-btn {
     background: var(--accent);
     color: #fff;
     border: none;
-    padding: 8px 14px;
-    border-radius: 12px;
+    padding: 7px 12px;
+    border-radius: 8px;
     font-weight: 700;
-    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.35);
   }
 
   /* Main panel trên mobile */
   .main-panel {
-    padding: 16px 14px calc(var(--player-h) + 60px) !important;
+    padding: 16px 14px calc(var(--player-h) + 10px) !important;
     margin-left: 0 !important;
     background: none;
   }
 
-  .panel-title {
-    font-size: 28px;
-    font-weight: 900;
-  }
-
-  /* Track list di động sang trọng hơn */
-  .track-item {
-    padding: 12px;
-    margin-bottom: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.02);
-  }
-
-  .track-item.active {
-    background: rgba(124, 58, 237, 0.1);
-    border-color: rgba(124, 58, 237, 0.25);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
-
-  .track-cover {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
-  }
-
-  .track-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-  }
-
-  .track-artist {
-    font-size: 12px;
-    opacity: 0.6;
-  }
-
-  /* ── REDESIGN PLAYER MOBILE (FLOATING PREMIUM GLASS BAR) ── */
+  /* ── FIXED PLAYER MOBILE (PINNED TO FOOTPAGE) ── */
   .player-container {
-    padding: 0 16px 24px;
-    /* Tạo khoảng trống xung quanh để thanh nổi hẳn lên */
-    pointer-events: none;
+    padding: 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     z-index: 1000;
   }
 
   .player-bar {
-    pointer-events: auto;
     height: var(--player-h);
-    background: rgba(15, 15, 35, 0.75) !important;
-    backdrop-filter: blur(35px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(35px) saturate(200%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-radius: 28px !important;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8) !important;
+    background: rgba(8, 8, 20, 0.95) !important;
+    backdrop-filter: blur(40px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 0 !important;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.6) !important;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    position: relative;
-    width: 100%;
   }
 
   .player-inner {
-    padding: 0 18px;
+    padding: 0 16px;
     height: 100%;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    /* Stack info and buttons */
+    justify-content: center;
+    gap: 8px;
   }
 
-  /* Left: Song info */
+  /* Info on top row */
   .player-left {
-    width: auto;
-    flex: 1;
-    min-width: 0;
+    width: 100%;
     gap: 12px;
+    justify-content: center;
   }
 
   .player-cover {
-    width: 54px;
-    height: 54px;
-    border-radius: 14px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+  }
+
+  .player-text-premium {
+    flex: 0 1 auto;
+    text-align: left;
+    min-width: 0;
   }
 
   .player-title-full {
-    font-size: 13px;
-    font-weight: 800;
+    font-size: 14px;
+    font-weight: 700;
     color: #fff;
+    max-width: 240px;
   }
 
   .player-artist-premium {
     font-size: 11px;
-    font-weight: 500;
+    opacity: 0.7;
   }
 
-  /* Center: Controls */
+  /* Controls on bottom row */
   .player-center {
-    flex-shrink: 0;
+    width: 100%;
   }
 
   .player-buttons-modern {
-    gap: 14px;
+    width: 100%;
+    justify-content: center;
+    gap: 20px;
   }
 
   .pl-play-modern {
-    width: 50px;
-    height: 50px;
+    width: 42px;
+    height: 42px;
     background: #fff;
     color: #000;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
   }
 
+  /* Restore all icons */
   .pl-btn-modern.btn-shuffle,
   .pl-btn-modern.btn-repeat {
-    display: none;
+    display: flex !important;
+    padding: 6px;
   }
 
-  /* Right: Volume ẩn */
   .player-right {
     display: none;
   }
 
-  /* Progress Bar nổi ở trên cùng thanh player */
+  /* Progress Bar thin line at the very top of the bar */
   .pb-wrap {
-    padding: 0 20px;
+    padding: 0;
     top: 0;
-    width: 100%;
     position: absolute;
-    left: 0;
+    width: 100%;
   }
 
   .pb-track {
-    height: 3px;
-    border-radius: 0 0 100px 100px;
-    background: rgba(255, 255, 255, 0.1);
+    height: 2px;
+    border-radius: 0;
   }
 
   .pb-times {
     display: none;
   }
 
-  /* Sidebar mobile chuyên nghiệp hơn */
   .sidebar {
     width: 85vw;
-    background: #06060c;
+    background: #040408;
   }
 }
 
