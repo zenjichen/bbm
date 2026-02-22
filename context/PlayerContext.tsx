@@ -223,40 +223,73 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             const fileId = currentTrack.file_id || String(currentTrack.id);
             const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
             const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+            // NEXT_PUBLIC_VERCEL_API_URL: URL tuyệt đối của Vercel deployment
+            // Dùng khi app chạy trên GitHub Pages nhưng cần gọi API proxy của Vercel
+            // Ví dụ: https://bbm-zenjichens-projects.vercel.app
+            const vercelApiUrl = process.env.NEXT_PUBLIC_VERCEL_API_URL || '';
 
             /**
              * CHIẾN LƯỢC PHÁT NHẠC (theo thứ tự ưu tiên):
              *
-             * 1. API Proxy (same-origin, không CORS, không virus scan)
-             *    - Chỉ hoạt động khi deploy trên Vercel (có server-side)
+             * 0. Kiểm tra API Proxy có hoạt động không (HEAD request nhanh)
+             *    - Nếu có NEXT_PUBLIC_VERCEL_API_URL → dùng URL tuyệt đối đó
+             *    - Nếu không → thử relative (chỉ hoạt động khi chạy trên Vercel)
              *
-             * 2. Direct audio.src với Google API URL
-             *    - Không bị CORS (audio element dùng no-cors mode)
-             *    - Có thể bị Format error nếu file lớn (virus scan HTML)
+             * 1. API Proxy (cross-origin fetch to Vercel)
+             *    - Hoạt động cả khi app chạy trên GitHub Pages
+             *    - Vercel server fetch từ Google Drive → không bị CORS, không virus scan
              *
-             * 3. Direct audio.src với Google UC URL
-             *    - Fallback cuối cùng
+             * 2. Direct audio.src với Google API URL + acknowledgeAbuse=true
+             *    - Fallback nếu không có Vercel proxy
+             *
+             * 3-4. UC URL fallbacks
              */
+
+            // ── Xây dựng URL proxy (absolute nếu có vercelApiUrl, ngược lại relative) ──
+            const proxyBase = vercelApiUrl || '';
+            const proxyCheckUrl = `${proxyBase}${basePath}/api/stream?id=ping_check`;
+
+            // ── Kiểm tra nhanh: API Proxy có tồn tại không? ──
+            let proxyAvailable = false;
+            try {
+                const headRes = await fetch(proxyCheckUrl, {
+                    method: 'HEAD',
+                    signal: AbortSignal.timeout(4000),
+                    // Cho phép cross-origin nếu đang gọi Vercel từ GitHub Pages
+                    mode: proxyBase ? 'cors' : 'same-origin',
+                });
+                // 400 = server có (missing actual file id) → proxy OK
+                // 404 = không có server (GitHub Pages static)
+                // 401 = Vercel password protected → coi như có proxy nhưng không dùng được
+                proxyAvailable = headRes.status !== 404 && headRes.status !== 401;
+                console.log(`[Player] API Proxy check: HTTP ${headRes.status} → ${proxyAvailable ? '✓ Proxy hoạt động' : '✗ Bỏ qua proxy'}`);
+            } catch (_) {
+                proxyAvailable = false;
+                console.log('[Player] API Proxy check: timeout/lỗi → bỏ qua proxy');
+            }
 
             const strategies: Array<{ fn: () => Promise<boolean>; label: string }> = [];
 
-            // ── Chiến lược 1: API Proxy (ưu tiên cao nhất) ──
-            strategies.push({
-                label: 'API Proxy',
-                fn: () => tryFetchBlob(
-                    audio,
-                    `${basePath}/api/stream?id=${encodeURIComponent(fileId)}`,
-                    'API Proxy (server-side)'
-                ),
-            });
+            // ── Chiến lược 1: API Proxy (chỉ thử nếu server tồn tại và không bị block) ──
+            if (proxyAvailable) {
+                const proxyStreamUrl = `${proxyBase}${basePath}/api/stream?id=${encodeURIComponent(fileId)}`;
+                strategies.push({
+                    label: 'API Proxy',
+                    fn: () => tryFetchBlob(
+                        audio,
+                        proxyStreamUrl,
+                        `API Proxy (${proxyBase ? 'Vercel cross-origin' : 'server-side'})`
+                    ),
+                });
+            }
 
-            // ── Chiến lược 2: Direct Google API URL ──
+            // ── Chiến lược 2: Direct Google API URL + acknowledgeAbuse để bypass virus scan ──
             if (apiKey) {
                 strategies.push({
                     label: 'Google API Direct',
                     fn: () => tryDirectSrc(
                         audio,
-                        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`,
+                        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}&acknowledgeAbuse=true`,
                         'Google API (direct audio.src)'
                     ),
                 });
@@ -267,7 +300,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                 label: 'Google UC Direct',
                 fn: () => tryDirectSrc(
                     audio,
-                    `https://drive.google.com/uc?id=${fileId}&export=download&confirm=t`,
+                    `https://drive.google.com/uc?id=${fileId}&export=download&confirm=t&acknowledgeAbuse=true`,
                     'Google UC (direct audio.src)'
                 ),
             });

@@ -17,8 +17,27 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    if (req.method !== 'GET') {
+    // Cho phép cross-origin requests từ bất kỳ domain nào (GitHub Pages, v.v.)
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Content-Type, Accept-Ranges');
+
+    // Xử lý OPTIONS preflight
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
         return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // HEAD request dùng để kiểm tra proxy availability — trả về 400 nhanh nếu thiếu params
+    if (req.method === 'HEAD') {
+        const fileId = req.query.id as string;
+        if (!fileId || fileId === 'ping_check') {
+            return res.status(400).end();
+        }
     }
 
     const fileId = req.query.id as string;

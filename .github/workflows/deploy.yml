@@ -44,6 +44,8 @@ jobs:
           # Set this to /bbm if your repo name is "bbm"
           # Leave empty if using a custom domain or username.github.io
           NEXT_PUBLIC_BASE_PATH: ${{ secrets.NEXT_PUBLIC_BASE_PATH || '/bbm' }}
+          # URL tuyệt đối của Vercel deployment để GitHub Pages có thể gọi API proxy
+          NEXT_PUBLIC_VERCEL_API_URL: ${{ secrets.NEXT_PUBLIC_VERCEL_API_URL }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
