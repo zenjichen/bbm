@@ -451,7 +451,8 @@ body {
 .main-panel {
   flex: 1;
   overflow-y: auto;
-  padding: 36px 40px 24px;
+  /* Sửa lỗi lẹm bài hát cuối: Padding bottom lớn hơn chiều cao Player + lề */
+  padding: 36px 40px calc(var(--player-h) + 120px);
   background: linear-gradient(180deg, rgba(124, 58, 237, 0.04) 0%, transparent 360px);
   position: relative;
   scrollbar-width: thin;
@@ -1127,224 +1128,157 @@ input[type="range"]::-moz-range-thumb {
 
   /* Tokens */
   :root {
-    --player-h: 68px;
-    --navbar-h: 50px;
+    --player-h: 86px;
+    /* Tăng để player nổi trông sang hơn */
+    --navbar-h: 0px;
   }
 
-  /* Navbar slim */
-  .navbar-inner {
-    padding: 0 14px;
+  body {
+    background: #050510;
   }
 
-  .logo-svg {
-    width: 26px;
-    height: 26px;
-  }
-
-  .logo-text {
-    font-size: 15px;
-  }
-
-  /* Hide desktop navbar on mobile */
   .navbar {
-    display: none;
+    display: none !important;
   }
 
-  /* Show mobile topbar, hide desktop floating lib btn */
+  /* Topbar di động */
   .mobile-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: rgba(5, 5, 15, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(25px);
+  }
+
+  .mobile-lib-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.35);
+  }
+
+  /* Main panel trên mobile */
+  .main-panel {
+    padding: 16px 14px calc(var(--player-h) + 60px) !important;
+    margin-left: 0 !important;
+    background: none;
+  }
+
+  .panel-title {
+    font-size: 28px;
+    font-weight: 900;
+  }
+
+  /* Track list di động sang trọng hơn */
+  .track-item {
+    padding: 12px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.02);
+  }
+
+  .track-item.active {
+    background: rgba(124, 58, 237, 0.1);
+    border-color: rgba(124, 58, 237, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .track-cover {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+  }
+
+  .track-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .track-artist {
+    font-size: 12px;
+    opacity: 0.6;
+  }
+
+  /* ── REDESIGN PLAYER MOBILE (FLOATING PREMIUM GLASS BAR) ── */
+  .player-container {
+    padding: 0 16px 24px;
+    /* Tạo khoảng trống xung quanh để thanh nổi hẳn lên */
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .player-bar {
+    pointer-events: auto;
+    height: var(--player-h);
+    background: rgba(15, 15, 35, 0.75) !important;
+    backdrop-filter: blur(35px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(35px) saturate(200%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 28px !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8) !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+  }
+
+  .player-inner {
+    padding: 0 18px;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
 
-  .mobile-topbar-logo {
-    display: flex;
-    align-items: center;
-    margin-right: 12px;
-  }
-
-
-
-  .panel-floating-lib-btn {
-    display: none !important;
-  }
-
-  /* Sidebar: full-screen overlay on mobile */
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 80vw;
-    max-width: 300px;
-    z-index: 1000;
-    transform: translateX(-100%);
-    transition: transform 0.35s cubic-bezier(0.19, 1, 0.22, 1);
-    background: #060614;
-    border-right: 1px solid var(--border);
-  }
-
-  .sidebar-open {
-    transform: translateX(0);
-    box-shadow: 20px 0 60px rgba(0, 0, 0, 0.85);
-  }
-
-  .sidebar-collapsed {
-    transform: translateX(-100%);
-  }
-
-  .sidebar-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(6px);
-    z-index: 950;
-  }
-
-  /* Main panel: full width, no extra padding */
-  .main-panel {
-    padding: 14px 12px 12px;
-    margin-left: 0 !important;
-  }
-
-  /* Panel header compact */
-  .panel-header {
-    margin-bottom: 12px;
-  }
-
-  .panel-title {
-    font-size: 20px;
-    letter-spacing: -0.3px;
-  }
-
-  .panel-count {
-    font-size: 12px;
-  }
-
-  .panel-cover {
-    width: 64px;
-    height: 64px;
-    font-size: 26px;
-    border-radius: 8px;
-  }
-
-  .panel-playlist-head {
-    gap: 12px;
-  }
-
-  .panel-playlist-title {
-    font-size: 20px;
-    letter-spacing: -0.3px;
-    margin-bottom: 5px;
-  }
-
-  .panel-playlist-label {
-    font-size: 10px;
-    margin-bottom: 4px;
-  }
-
-  .panel-playlist-meta {
-    font-size: 12px;
-  }
-
-  /* Track table: hide header duration column */
-  .track-table-header {
-    padding: 0 8px 6px;
-    font-size: 10px;
-  }
-
-  .track-table-header>div:last-child {
-    display: none;
-  }
-
-  /* Track item */
-  .track-item {
-    padding: 7px 8px;
-    border-radius: 6px;
-  }
-
-  .track-number {
-    width: 24px;
-    font-size: 12px;
-  }
-
-  .track-cover {
-    width: 38px;
-    height: 38px;
-    margin-right: 10px;
-    border-radius: 5px;
-  }
-
-  .track-info {
-    padding-right: 0;
-  }
-
-  .track-title {
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  .track-artist {
-    font-size: 11px;
-    margin-top: 1px;
-  }
-
-  .track-duration {
-    display: none;
-  }
-
-  /* ── Player Bar ── */
-  .player-bar {
-    height: var(--player-h);
-  }
-
-  .player-inner {
-    padding: 0 10px;
-    gap: 8px;
-  }
-
-  /* Left: cover + song info */
+  /* Left: Song info */
   .player-left {
     width: auto;
     flex: 1;
     min-width: 0;
-    gap: 8px;
+    gap: 12px;
   }
 
   .player-cover {
-    width: 42px;
-    height: 42px;
-    border-radius: 7px;
-    flex-shrink: 0;
-  }
-
-  .player-text-premium {
-    min-width: 0;
-    flex: 1;
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
   }
 
   .player-title-full {
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
   }
 
   .player-artist-premium {
     font-size: 11px;
-    margin-top: 1px;
+    font-weight: 500;
   }
 
-  /* Center: Prev / Play / Next only */
+  /* Center: Controls */
   .player-center {
     flex-shrink: 0;
   }
 
   .player-buttons-modern {
-    gap: 8px;
+    gap: 14px;
   }
 
   .pl-play-modern {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
+    background: #fff;
+    color: #000;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
   }
 
   .pl-btn-modern.btn-shuffle,
@@ -1352,26 +1286,39 @@ input[type="range"]::-moz-range-thumb {
     display: none;
   }
 
-  /* Right: hide volume */
+  /* Right: Volume ẩn */
   .player-right {
     display: none;
   }
 
-  /* Progress times smaller */
+  /* Progress Bar nổi ở trên cùng thanh player */
+  .pb-wrap {
+    padding: 0 20px;
+    top: 0;
+    width: 100%;
+    position: absolute;
+    left: 0;
+  }
+
+  .pb-track {
+    height: 3px;
+    border-radius: 0 0 100px 100px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
   .pb-times {
-    font-size: 9px;
-    padding: 2px 0 0;
+    display: none;
   }
 
-  /* Sidebar header */
-  .sidebar-header {
-    padding: 18px 14px 10px;
-  }
-
-  .sidebar-title {
-    font-size: 14px;
+  /* Sidebar mobile chuyên nghiệp hơn */
+  .sidebar {
+    width: 85vw;
+    background: #06060c;
   }
 }
+
+
+
 
 /* ── TABLET (641px – 1024px) ── */
 @media (min-width: 641px) and (max-width: 1024px) {
