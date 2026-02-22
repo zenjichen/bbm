@@ -122,14 +122,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         let cancelled = false;
         let blobUrl: string | null = null;
+        let abortCtrl: AbortController | null = null;
 
-        const assignAndPlay = async (audio: HTMLAudioElement, src: string, mimeHint?: string): Promise<void> => {
+        const setAudioSrc = (audio: HTMLAudioElement, src: string): Promise<void> => {
             return new Promise((resolve, reject) => {
                 const cleanup = () => {
-                    audio.removeEventListener('canplay', onCanPlay);
-                    audio.removeEventListener('error', onErr);
+                    audio.removeEventListener('canplay', onOk);
+                    audio.removeEventListener('error', onFail);
                 };
-                const onCanPlay = async () => {
+                const onOk = async () => {
                     try {
                         audio.playbackRate = playbackSpeed;
                         await audio.play();
@@ -137,18 +138,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                         resolve();
                     } catch (e) { cleanup(); reject(e); }
                 };
-                const onErr = () => {
+                const onFail = () => {
                     cleanup();
-                    reject(new Error(audio.error?.message || 'MediaError'));
+                    const err = audio.error;
+                    reject(new Error(err?.message || `MediaError code ${err?.code}`));
                 };
-                audio.addEventListener('canplay', onCanPlay);
-                audio.addEventListener('error', onErr);
+                audio.addEventListener('canplay', onOk);
+                audio.addEventListener('error', onFail);
                 audio.pause();
-                if (mimeHint) {
-                    audio.src = src;
-                } else {
-                    audio.src = src;
-                }
+                audio.src = src;
                 audio.load();
             });
         };
@@ -164,25 +162,48 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
             if (!apiKey) {
                 console.error('[Player] Missing NEXT_PUBLIC_GOOGLE_API_KEY');
-                setIsPlaying(false);
-                setIsLoading(false);
-                isLoadingRef.current = false;
+                setIsPlaying(false); setIsLoading(false); isLoadingRef.current = false;
                 return;
             }
 
-            // Strategy 1: fetch() → Blob URL (bypasses HTMLAudioElement CORS restrictions)
             const driveUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${apiKey}&supportsAllDrives=true`;
 
+            // --- Strategy A: Direct URL (Google Drive v3 API returns CORS headers) ---
+            // This works when file is shared publicly and API key is valid.
+            // The browser streams audio natively without loading everything into RAM.
             try {
                 if (cancelled) return;
-                console.log('[Player] Fetching audio via fetch()...');
-                const res = await fetch(driveUrl, { method: 'GET' });
-
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}`);
+                console.log('[Player] Trying direct stream...');
+                await setAudioSrc(audio, driveUrl);
+                if (!cancelled) {
+                    setIsPlaying(true); setIsLoading(false); isLoadingRef.current = false;
+                    console.log('[Player] ✓ Playing via direct URL');
+                    return;
                 }
+            } catch (e: any) {
+                if (cancelled || e.name === 'AbortError') return;
+                console.warn('[Player] Direct stream failed:', e.message, '— trying fetch→blob fallback');
+            }
+
+            // --- Strategy B: fetch() → Blob URL ---
+            // Fallback: download the file via fetch (which does support CORS headers
+            // on Drive API), then play from an object URL. Only used as last resort
+            // because it downloads the whole file before playback starts.
+            try {
+                if (cancelled) return;
+                abortCtrl = new AbortController();
+                const res = await fetch(driveUrl, {
+                    signal: abortCtrl.signal,
+                    redirect: 'follow',
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
 
                 const contentType = res.headers.get('content-type') || 'audio/mpeg';
+                // Guard: if Drive returned HTML (a redirect page), it's not audio
+                if (contentType.includes('text/html')) {
+                    throw new Error('Drive returned HTML — file not public or wrong permissions');
+                }
+
                 const buffer = await res.arrayBuffer();
                 if (cancelled) return;
 
@@ -190,46 +211,26 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                 if (blobUrl) URL.revokeObjectURL(blobUrl);
                 blobUrl = URL.createObjectURL(blob);
 
-                await assignAndPlay(audio, blobUrl);
+                await setAudioSrc(audio, blobUrl);
                 if (!cancelled) {
-                    setIsPlaying(true);
-                    setIsLoading(false);
-                    isLoadingRef.current = false;
-                    console.log('[Player] Playing via Blob URL ✓');
+                    setIsPlaying(true); setIsLoading(false); isLoadingRef.current = false;
+                    console.log('[Player] ✓ Playing via Blob URL');
                     return;
                 }
-            } catch (err: any) {
-                if (cancelled || err.name === 'AbortError') return;
-                console.warn('[Player] Blob strategy failed:', err.message);
-            }
-
-            // Strategy 2: Direct src assignment (may work if CORS headers are present)
-            try {
-                if (cancelled) return;
-                await assignAndPlay(audio, driveUrl);
-                if (!cancelled) {
-                    setIsPlaying(true);
-                    setIsLoading(false);
-                    isLoadingRef.current = false;
-                    console.log('[Player] Playing via direct URL ✓');
-                    return;
-                }
-            } catch (err: any) {
-                if (cancelled || err.name === 'AbortError') return;
-                console.warn('[Player] Direct URL failed:', err.message);
+            } catch (e: any) {
+                if (cancelled || e.name === 'AbortError') return;
+                console.error('[Player] ✗ Both strategies failed for:', currentTrack.title, e.message);
             }
 
             if (!cancelled) {
-                console.error('[Player] All strategies failed for track:', currentTrack.title);
-                setIsPlaying(false);
-                setIsLoading(false);
-                isLoadingRef.current = false;
+                setIsPlaying(false); setIsLoading(false); isLoadingRef.current = false;
             }
         };
 
         if (currentTrack) fetchAndPlay();
         return () => {
             cancelled = true;
+            abortCtrl?.abort();
             if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
         };
     }, [currentTrack]);
