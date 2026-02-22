@@ -3,43 +3,42 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from "react";
 
 export interface Track {
-    id: string | number;      // Drive file ID or legacy numeric id
-    file_id: string;          // Drive file ID (used for streaming)
+    id: string | number;
+    file_id: string;
     file_unique_id?: string;
-    name?: string;            // Original filename
+    name?: string;
     title: string | null;
     performer: string | null;
     duration: number;
     file_size?: number;
     mime_type?: string;
-    topic_id?: string | number | null; // Drive folder ID (string) or legacy number
-    playlist_id?: string;     // Drive folder ID
+    topic_id?: string | number | null;
+    playlist_id?: string;
     message_id?: number;
     chat_id?: string;
     date?: number;
     thumbnail?: string | null;
-    /** Public Google Drive stream URL — browser plays directly, no proxy */
     stream_url?: string;
 }
 
-export interface TopicInfo {
-    id: number;
-    name: string;
-}
+export interface TopicInfo { id: number; name: string; }
 
 type RepeatMode = 'off' | 'all' | 'one';
+type PlaybackSpeed = 0.5 | 0.75 | 1 | 1.25 | 1.5 | 1.75 | 2;
 
 interface PlayerContextType {
     currentTrack: Track | null;
     playlist: Track[];
     isPlaying: boolean;
     isLoading: boolean;
-    progress: number;        // 0-100
-    currentTime: number;     // seconds
-    totalDuration: number;   // seconds
-    volume: number;          // 0-100
+    progress: number;
+    currentTime: number;
+    totalDuration: number;
+    volume: number;
     isShuffle: boolean;
     repeatMode: RepeatMode;
+    playbackSpeed: PlaybackSpeed;
+    audioRef: React.MutableRefObject<HTMLAudioElement | null>;
     playTrack: (track: Track) => void;
     togglePlay: () => void;
     nextTrack: () => void;
@@ -49,6 +48,7 @@ interface PlayerContextType {
     setVolume: (vol: number) => void;
     toggleShuffle: () => void;
     toggleRepeat: () => void;
+    setPlaybackSpeed: (speed: PlaybackSpeed) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -64,15 +64,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const [volume, setVolumeState] = useState(80);
     const [isShuffle, setIsShuffle] = useState(false);
     const [repeatMode, setRepeatMode] = useState<RepeatMode>('off');
+    const [playbackSpeed, setPlaybackSpeedState] = useState<PlaybackSpeed>(1);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const isLoadingRef = useRef(false);
 
-    // Initialize audio element
     useEffect(() => {
         if (typeof window !== "undefined" && !audioRef.current) {
             audioRef.current = new Audio();
-            audioRef.current.volume = volume / 100;
+            audioRef.current.volume = 0.8;
 
             audioRef.current.addEventListener('timeupdate', () => {
                 const audio = audioRef.current;
@@ -83,62 +83,27 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
             audioRef.current.addEventListener('loadedmetadata', () => {
                 const audio = audioRef.current;
-                if (audio) {
-                    setTotalDuration(audio.duration);
-                    setIsLoading(false);
-                    isLoadingRef.current = false;
-                }
+                if (audio) { setTotalDuration(audio.duration); setIsLoading(false); isLoadingRef.current = false; }
             });
 
-            audioRef.current.addEventListener('canplay', () => {
-                setIsLoading(false);
-                isLoadingRef.current = false;
-            });
-
-            audioRef.current.addEventListener('waiting', () => {
-                setIsLoading(true);
-                isLoadingRef.current = true;
-            });
-
-            audioRef.current.addEventListener('ended', () => {
-                handleTrackEnded();
-            });
-
-            audioRef.current.addEventListener('error', (e) => {
-                console.error("Audio error:", e);
-                setIsLoading(false);
-                isLoadingRef.current = false;
-            });
+            audioRef.current.addEventListener('canplay', () => { setIsLoading(false); isLoadingRef.current = false; });
+            audioRef.current.addEventListener('waiting', () => { setIsLoading(true); isLoadingRef.current = true; });
+            audioRef.current.addEventListener('ended', () => { document.dispatchEvent(new CustomEvent('audio-track-ended')); });
+            audioRef.current.addEventListener('error', () => { setIsLoading(false); isLoadingRef.current = false; });
         }
     }, []);
 
-    const handleTrackEnded = useCallback(() => {
-        // This will be called from the 'ended' event
-        // We dispatch a custom event to handle it in the effect below
-        document.dispatchEvent(new CustomEvent('audio-track-ended'));
-    }, []);
-
-    // Handle auto-next on track end
     useEffect(() => {
         const handler = () => {
             if (repeatMode === 'one') {
-                // Replay same track
                 const audio = audioRef.current;
-                if (audio) {
-                    audio.currentTime = 0;
-                    audio.play().catch(console.error);
-                }
+                if (audio) { audio.currentTime = 0; audio.play().catch(console.error); }
                 return;
             }
-
             if (!currentTrack || playlist.length === 0) return;
-
             const idx = playlist.findIndex(t => t.id === currentTrack.id);
-
             if (isShuffle) {
-                // Random next
-                const randomIdx = Math.floor(Math.random() * playlist.length);
-                playTrack(playlist[randomIdx]);
+                playTrack(playlist[Math.floor(Math.random() * playlist.length)]);
             } else if (idx < playlist.length - 1) {
                 playTrack(playlist[idx + 1]);
             } else if (repeatMode === 'all') {
@@ -147,149 +112,85 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                 setIsPlaying(false);
             }
         };
-
         document.addEventListener('audio-track-ended', handler);
         return () => document.removeEventListener('audio-track-ended', handler);
     }, [currentTrack, playlist, isShuffle, repeatMode]);
 
-    // Fetch and play track from Telegram via our proxy API
     useEffect(() => {
         const fetchAndPlay = async () => {
             const audio = audioRef.current;
             if (!audio || !currentTrack) return;
-
-            setIsLoading(true);
-            isLoadingRef.current = true;
-
+            setIsLoading(true); isLoadingRef.current = true;
             try {
-                // Use stream_url (direct Google Drive public URL) if available
-                // Fallback to /api/stream proxy for backward compatibility
-                const streamUrl = currentTrack.stream_url
-                    || `/api/stream/${encodeURIComponent(currentTrack.file_id)}`;
+                const streamUrl = currentTrack.stream_url || `/api/stream/${encodeURIComponent(currentTrack.file_id)}`;
                 audio.src = streamUrl;
+                audio.playbackRate = playbackSpeed;
                 await audio.play();
                 setIsPlaying(true);
             } catch (error: any) {
-                console.error("Play error:", error);
-                // If autoplay is blocked, we still set the source
-                if (error.name === 'NotAllowedError') {
-                    setIsPlaying(false);
-                }
+                if (error.name === 'NotAllowedError') setIsPlaying(false);
             } finally {
-                setIsLoading(false);
-                isLoadingRef.current = false;
+                setIsLoading(false); isLoadingRef.current = false;
             }
         };
-
-        if (currentTrack) {
-            fetchAndPlay();
-        }
+        if (currentTrack) fetchAndPlay();
     }, [currentTrack]);
 
-    // Sync isPlaying state with audio
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio || !currentTrack || isLoadingRef.current) return;
-
-        if (isPlaying) {
-            audio.play().catch(e => {
-                console.error("Play failed:", e);
-                setIsPlaying(false);
-            });
-        } else {
-            audio.pause();
-        }
+        if (isPlaying) { audio.play().catch(() => setIsPlaying(false)); }
+        else { audio.pause(); }
     }, [isPlaying]);
 
-    // Sync volume
     useEffect(() => {
         const audio = audioRef.current;
         if (audio) audio.volume = volume / 100;
     }, [volume]);
 
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (audio) audio.playbackRate = playbackSpeed;
+    }, [playbackSpeed]);
+
     const playTrack = (track: Track) => {
-        setCurrentTrack(track);
-        setIsPlaying(true);
-        setProgress(0);
-        setCurrentTime(0);
+        setCurrentTrack(track); setIsPlaying(true); setProgress(0); setCurrentTime(0);
     };
-
-    const togglePlay = () => {
-        if (!currentTrack) return;
-        setIsPlaying(prev => !prev);
-    };
-
+    const togglePlay = () => { if (!currentTrack) return; setIsPlaying(prev => !prev); };
     const nextTrack = () => {
         if (!currentTrack || playlist.length === 0) return;
-
-        if (isShuffle) {
-            const randomIdx = Math.floor(Math.random() * playlist.length);
-            playTrack(playlist[randomIdx]);
-            return;
-        }
-
+        if (isShuffle) { playTrack(playlist[Math.floor(Math.random() * playlist.length)]); return; }
         const idx = playlist.findIndex(t => t.id === currentTrack.id);
-        if (idx < playlist.length - 1) {
-            playTrack(playlist[idx + 1]);
-        } else if (repeatMode === 'all') {
-            playTrack(playlist[0]);
-        }
+        if (idx < playlist.length - 1) playTrack(playlist[idx + 1]);
+        else if (repeatMode === 'all') playTrack(playlist[0]);
     };
-
     const prevTrack = () => {
         if (!currentTrack || playlist.length === 0) return;
-
-        // If more than 3 seconds into the track, restart it
-        if (currentTime > 3) {
-            seekTo(0);
-            return;
-        }
-
+        if (currentTime > 3) { seekTo(0); return; }
         const idx = playlist.findIndex(t => t.id === currentTrack.id);
-        if (idx > 0) {
-            playTrack(playlist[idx - 1]);
-        } else if (repeatMode === 'all') {
-            playTrack(playlist[playlist.length - 1]);
-        }
+        if (idx > 0) playTrack(playlist[idx - 1]);
+        else if (repeatMode === 'all') playTrack(playlist[playlist.length - 1]);
     };
-
     const seekTo = (percent: number) => {
         const audio = audioRef.current;
         if (!audio || !audio.duration) return;
         audio.currentTime = (percent / 100) * audio.duration;
     };
-
-    const setVolume = (vol: number) => {
-        setVolumeState(Math.max(0, Math.min(100, vol)));
-    };
-
-    const toggleShuffle = () => {
-        setIsShuffle(prev => !prev);
-    };
-
-    const toggleRepeat = () => {
-        setRepeatMode(prev => {
-            if (prev === 'off') return 'all';
-            if (prev === 'all') return 'one';
-            return 'off';
-        });
-    };
-
-    const setPlaylist = (tracks: Track[]) => {
-        setPlaylistState(tracks);
-    };
+    const setVolume = (vol: number) => setVolumeState(Math.max(0, Math.min(100, vol)));
+    const toggleShuffle = () => setIsShuffle(prev => !prev);
+    const toggleRepeat = () => setRepeatMode(prev => prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off');
+    const setPlaybackSpeed = (speed: PlaybackSpeed) => setPlaybackSpeedState(speed);
+    const setPlaylist = (tracks: Track[]) => setPlaylistState(tracks);
 
     return (
-        <PlayerContext.Provider
-            value={{
-                currentTrack, playlist, isPlaying, isLoading,
-                progress, currentTime, totalDuration, volume,
-                isShuffle, repeatMode,
-                playTrack, togglePlay, nextTrack, prevTrack,
-                setPlaylist, seekTo, setVolume,
-                toggleShuffle, toggleRepeat
-            }}
-        >
+        <PlayerContext.Provider value={{
+            currentTrack, playlist, isPlaying, isLoading,
+            progress, currentTime, totalDuration, volume,
+            isShuffle, repeatMode, playbackSpeed, audioRef,
+            playTrack, togglePlay, nextTrack, prevTrack,
+            setPlaylist, seekTo, setVolume,
+            toggleShuffle, toggleRepeat, setPlaybackSpeed,
+        }}>
             {children}
         </PlayerContext.Provider>
     );
