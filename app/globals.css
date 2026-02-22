@@ -99,68 +99,22 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ─── Progress Bar (PB) ─── */
-.pb-wrap {
-  width: 100%;
-  padding: 0;
-  /* Align with edges */
-  position: absolute;
-  top: -10px;
-  /* Float above the player inner */
-  left: 0;
-  z-index: 10;
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
 
-.pb-track {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-  position: relative;
-  transition: height 0.3s ease;
-  /* Larger hit area for easier dragging */
-  padding: 10px 0;
-  background-clip: content-box;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.pb-track:hover,
-.pb-active {
-  height: 8px;
+::-webkit-scrollbar-thumb {
+  background: #1e1e4a;
+  border-radius: 3px;
 }
 
-.pb-fill {
-  height: 100%;
-  background: var(--grad-primary);
-  position: relative;
-  border-radius: 0 4px 4px 0;
-}
-
-.pb-thumb {
-  width: 14px;
-  height: 14px;
-  background: #fff;
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 15px var(--accent);
-  opacity: 0;
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.pb-track:hover .pb-thumb,
-.pb-active .pb-thumb {
-  opacity: 1;
-}
-
-.pb-times {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 16px;
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  margin-top: 5px;
+::-webkit-scrollbar-thumb:hover {
+  background: #2e2e6a;
 }
 
 /* ================================================================
@@ -2167,6 +2121,7 @@ body[data-playing="true"] .player-cover {
   }
 }
 
+<<<<<<< HEAD
 /* Mobile Premium (768px) */
 @media (max-width: 768px) {
   :root {
@@ -2187,16 +2142,29 @@ body[data-playing="true"] .player-cover {
     gap: 0 !important;
     justify-content: space-between !important;
     display: flex !important;
+=======
+@media (max-width: 600px) {
+  .player-inner {
+    padding: 0 12px;
+    gap: 8px;
+    justify-content: center;
+>>>>>>> parent of 5afcf8f (feat: major mobile UI overhaul - super-sized progress bar with large hit area, centered stacked controls, and enhanced tactile feedback)
   }
 
   /* Layer 1: Track Info (Top) */
   .player-left {
+<<<<<<< HEAD
     order: 1 !important;
     flex: 0 0 auto !important;
     width: 100% !important;
     justify-content: center !important;
     gap: 12px !important;
     margin-bottom: 10px !important;
+=======
+    flex: 0 0 120px;
+    /* Nhỏ lại cho mobile */
+    gap: 8px;
+>>>>>>> parent of 5afcf8f (feat: major mobile UI overhaul - super-sized progress bar with large hit area, centered stacked controls, and enhanced tactile feedback)
   }
 
   .player-cover {
@@ -2206,6 +2174,7 @@ body[data-playing="true"] .player-cover {
   }
 
   .player-text-premium {
+<<<<<<< HEAD
     text-align: left !important;
     max-width: calc(100% - 60px) !important;
   }
@@ -2283,6 +2252,54 @@ body[data-playing="true"] .player-cover {
 
   .track-item {
     padding: 14px 12px !important;
+=======
+    display: none;
+    /* Ẩn text trên mobile cực nhỏ hoặc dùng flex-column */
+  }
+
+  .player-center {
+    flex: 1;
+    max-width: none;
+  }
+
+  .player-buttons-premium {
+    gap: 8px;
+    padding: 4px 8px;
+  }
+
+  .pl-btn-framed {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  /* Ẩn bớt nút trên mobile để đỡ chật */
+  .pl-btn-framed[title="Shuffle"],
+  .pl-btn-framed[title="Repeat"] {
+    display: none;
+  }
+
+  .pl-play-main-premium {
+    width: 50px;
+    height: 50px;
+  }
+
+  .player-right {
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  .vol-wrap-aesthetic {
+    display: none;
+    /* Volume capsule quá to cho mobile */
+  }
+
+  /* Hiện icon volume đơn giản thay vì capsule */
+  .player-right::after {
+    content: '🔊';
+    font-size: 18px;
+    opacity: 0.5;
+>>>>>>> parent of 5afcf8f (feat: major mobile UI overhaul - super-sized progress bar with large hit area, centered stacked controls, and enhanced tactile feedback)
   }
 }
 
