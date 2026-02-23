@@ -1145,57 +1145,92 @@ input[type="range"]::-moz-range-thumb {
    RESPONSIVE SYSTEM — Mobile / Tablet / Desktop
    ══════════════════════════════════════════════════════ */
 
-/* ── MOBILE (≤ 640px) — REDESIGNED ── */
+/* ── MOBILE (≤ 640px) — Fixed-scale layout ── */
 @media (max-width: 640px) {
 
+  /* ── Tokens ── */
   :root {
-    --player-h: 130px;
+    --topbar-h: 52px;
+    --player-h: 128px;
+    /* progress(28) + info-row(56) + controls-row(44) */
     --navbar-h: 0px;
   }
 
+  /* ── Reset body / html ── */
+  html,
   body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    /* Khoá scroll ở root */
+    overscroll-behavior: none;
+    /* Không bounce khi kéo ngoài */
     background: #04040a;
+    -webkit-text-size-adjust: 100%;
+    /* Khoá auto-resize font */
+    text-size-adjust: 100%;
   }
 
   .navbar {
     display: none !important;
   }
 
-  /* ── Topbar ── */
+  /* ── App shell: chia 3 vùng tuyệt đối ── */
+  .app-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    /* dynamic viewport height — tính đúng cả notch/bar */
+    overflow: hidden;
+    position: fixed;
+    inset: 0;
+  }
+
+  /* ── Overlay background ── */
+  .global-player-bg,
+  .bg-mesh {
+    position: fixed;
+    inset: 0;
+  }
+
+  /* ── Topbar (cố định 52px) ── */
   .mobile-topbar {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 14px;
-    background: rgba(6, 6, 16, 0.98);
+    padding: 0 14px;
+    height: var(--topbar-h);
+    flex-shrink: 0;
+    background: rgba(6, 6, 16, 0.99);
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
-    position: sticky;
-    top: 0;
-    z-index: 400;
-    height: 52px;
     box-sizing: border-box;
+    z-index: 400;
+    position: relative;
   }
 
   .mobile-lib-btn {
-    background: rgba(124, 58, 237, 0.18);
+    background: rgba(124, 58, 237, 0.15);
     color: var(--accent-light);
-    border: 1px solid rgba(124, 58, 237, 0.3);
+    border: 1px solid rgba(124, 58, 237, 0.28);
     width: 36px;
     height: 36px;
+    min-width: 36px;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
     padding: 0;
     cursor: pointer;
+    flex-shrink: 0;
     transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .mobile-lib-btn:active {
-    background: rgba(124, 58, 237, 0.35);
+    background: rgba(124, 58, 237, 0.32);
+    transform: scale(0.94);
   }
 
   .mobile-topbar-logo {
@@ -1207,86 +1242,137 @@ input[type="range"]::-moz-range-thumb {
     min-width: 0;
   }
 
-  /* ── Panel header gọn ── */
+  /* ── Main content (scroll area) ── */
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+    /* Quan trọng: flex item có thể co lại */
+  }
+
+  /* ── Main panel ── */
+  .main-panel {
+    padding: 12px 12px 20px !important;
+    margin-left: 0 !important;
+    background: none;
+    min-height: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ── Panel header — gọn trên mobile ── */
   .panel-header {
-    padding: 0 0 8px;
+    padding: 0 0 10px;
   }
 
   .panel-cover {
-    width: 56px !important;
-    height: 56px !important;
-    font-size: 24px !important;
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 22px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .panel-playlist-head {
+    gap: 12px !important;
   }
 
   .panel-playlist-title {
-    font-size: 20px !important;
-    letter-spacing: -0.5px;
-    margin-bottom: 3px;
+    font-size: 18px !important;
+    letter-spacing: -0.3px;
+    margin-bottom: 2px;
+    line-height: 1.2;
   }
 
   .panel-playlist-label {
-    font-size: 10px;
+    font-size: 9px;
     margin-bottom: 2px;
+    letter-spacing: 0.08em;
+  }
+
+  .panel-playlist-meta {
+    font-size: 12px;
   }
 
   .panel-title {
-    font-size: 20px !important;
+    font-size: 18px !important;
   }
 
-  /* ── Main Panel ── */
-  .main-panel {
-    padding: 10px 10px calc(var(--player-h) + 16px) !important;
-    margin-left: 0 !important;
-    background: none;
+  .panel-count {
+    font-size: 12px;
   }
 
-  /* ── Track table header — ẩn trên mobile ── */
+  /* ── Track table header ẩn ── */
   .track-table-header {
     display: none;
   }
 
-  /* ── Track items to hơn, dễ bấm ── */
+  /* ── Track items — tỉ lệ cân đối ── */
+  .track-list {
+    padding: 2px 0;
+  }
+
   .track-item {
-    padding: 9px 8px;
+    padding: 8px 10px;
     border-radius: 10px;
+    min-height: 64px;
+    box-sizing: border-box;
     transform: none !important;
+    -webkit-tap-highlight-color: transparent;
+    align-items: center;
   }
 
   .track-item:active {
     background: rgba(124, 58, 237, 0.12) !important;
+    transform: scale(0.99) !important;
   }
 
-  /* Số thứ tự nhỏ, ẩn chữ số, chỉ hiện bars */
+  /* Số thứ tự — nhỏ, mờ */
   .track-number {
-    width: 20px;
+    width: 18px;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.2);
+    text-align: center;
+    flex-shrink: 0;
   }
 
-  /* Thumbnail lớn hơn */
+  /* Thumbnail 48×48 */
   .track-cover {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
     border-radius: 8px;
-    margin-right: 12px;
+    margin-right: 11px;
+  }
+
+  .track-info {
+    flex: 1;
+    min-width: 0;
+    padding-right: 6px;
   }
 
   .track-title {
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.25;
+    letter-spacing: -0.1px;
   }
 
   .track-artist {
-    font-size: 12px;
-    margin-top: 3px;
-    opacity: 0.6;
+    font-size: 11.5px;
+    margin-top: 2px;
+    opacity: 0.55;
+    line-height: 1.3;
   }
 
   .track-duration {
-    font-size: 11px;
-    width: 38px;
-    color: rgba(255, 255, 255, 0.35);
+    font-size: 10.5px;
+    width: 36px;
+    min-width: 36px;
+    text-align: right;
+    color: rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
   }
 
   /* ── Sidebar overlay ── */
@@ -1295,18 +1381,23 @@ input[type="range"]::-moz-range-thumb {
     top: 0;
     left: 0;
     bottom: 0;
-    width: 82vw;
-    max-width: 300px;
-    background: #070712;
+    width: 80vw;
+    max-width: 290px;
+    background: #07071200;
+    background: rgba(7, 7, 18, 0.99);
     z-index: 1100;
     transform: translateX(-100%);
-    transition: transform 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+    transition: transform 0.32s cubic-bezier(0.19, 1, 0.22, 1);
     border-right: 1px solid rgba(255, 255, 255, 0.08);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
   }
 
   .sidebar-open {
     transform: translateX(0) !important;
-    box-shadow: 20px 0 60px rgba(0, 0, 0, 0.8) !important;
+    box-shadow: 16px 0 50px rgba(0, 0, 0, 0.9) !important;
   }
 
   .sidebar-collapsed {
@@ -1316,49 +1407,59 @@ input[type="range"]::-moz-range-thumb {
   .sidebar-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
     z-index: 1050;
   }
 
-  /* ── Player Bar ── */
+  /* ── Player Container (cố định dưới cùng) ── */
   .player-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: relative;
+    /* Nằm trong flex column của app-layout */
+    flex-shrink: 0;
     z-index: 1000;
-    padding: 0;
+    bottom: auto;
+    left: auto;
+    right: auto;
   }
 
+  /* ── Player Bar: layout 3 tầng ──
+     Tầng 1 (28px): progress bar + timestamps
+     Tầng 2 (56px): cover + title/artist + play btn
+     Tầng 3 (44px): shuffle / prev / next / repeat
+  */
   .player-bar {
     height: var(--player-h);
-    background: rgba(6, 6, 18, 0.97) !important;
-    backdrop-filter: blur(50px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(50px) saturate(180%) !important;
-    border-top: 1px solid rgba(124, 58, 237, 0.2) !important;
+    background: rgba(5, 5, 15, 0.98) !important;
+    backdrop-filter: blur(50px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(50px) saturate(160%) !important;
+    border-top: 1px solid rgba(124, 58, 237, 0.18) !important;
     border-radius: 0 !important;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7) !important;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.65) !important;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    padding-top: 0;
+    overflow: hidden;
   }
 
-  /* Progress bar ở đầu player */
+  /* ── Tầng 1: Progress + time (28px) ── */
   .pb-wrap {
-    padding: 10px 14px 0;
-    position: relative;
+    padding: 8px 16px 0;
+    flex-shrink: 0;
     width: 100%;
     box-sizing: border-box;
-    flex-shrink: 0;
+    position: relative;
+    height: 28px;
   }
 
   .pb-track {
     height: 3px;
     border-radius: 3px;
-    padding: 5px 0;
-    margin: -5px 0;
+    padding: 6px 0;
+    /* Hit area dọc */
+    margin: -6px 0;
+    box-sizing: content-box;
+    background: rgba(255, 255, 255, 0.1);
   }
 
   .pb-track:hover,
@@ -1366,98 +1467,136 @@ input[type="range"]::-moz-range-thumb {
     height: 5px;
   }
 
+  .pb-fill {
+    border-radius: 3px;
+  }
+
+  .pb-thumb {
+    width: 12px;
+    height: 12px;
+  }
+
   .pb-times {
     display: flex;
     font-size: 9px;
-    opacity: 0.45;
-    padding: 2px 0 0;
+    opacity: 0.4;
+    padding: 3px 0 0;
+    letter-spacing: 0.02em;
   }
 
-  /* Player inner: hàng 1 = cover + title + play button */
+  /* ── Tầng 2: Info + Play (56px) ── */
   .player-inner {
-    padding: 6px 14px 0;
-    flex: 1;
+    padding: 0 14px;
+    height: 56px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
   }
 
   .player-left {
-    width: auto;
     flex: 1;
+    width: auto;
     gap: 10px;
     justify-content: flex-start;
     min-width: 0;
+    align-items: center;
   }
 
   .player-cover {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 7px;
     flex-shrink: 0;
   }
 
   .player-text-premium {
     flex: 1;
-    text-align: left;
     min-width: 0;
+    text-align: left;
   }
 
   .player-title-full {
     font-size: 13px;
     font-weight: 700;
     color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.1px;
   }
 
   .player-artist-premium {
     font-size: 11px;
-    opacity: 0.55;
+    opacity: 0.5;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  /* Center: chỉ play button trên hàng 1 */
+  /* Chỉ play button trong player-center ở hàng info */
   .player-center {
     width: auto;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
   }
 
   .player-buttons-modern {
-    gap: 14px;
+    gap: 0;
     width: auto;
   }
 
-  /* Hàng 2: Shuffle / Prev / Play(đã ở hàng 1) / Next / Repeat */
-  .pl-btn-modern.btn-shuffle,
-  .pl-btn-modern.btn-repeat,
-  .pl-btn-modern.btn-prev,
-  .pl-btn-modern.btn-next {
+  /* Ẩn tất cả ngoài play button ở hàng info */
+  .player-buttons-modern .pl-btn-modern {
     display: none !important;
   }
 
   .pl-play-modern {
-    width: 42px;
-    height: 42px;
-    background: #fff;
+    width: 40px;
+    height: 40px;
+    background: #ffffff;
     color: #000;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 18px rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    flex-shrink: 0;
   }
 
   .player-right {
     display: none;
   }
 
-  /* Controls row ở dưới (Shuffle, Prev, Next, Repeat) */
+  /* ── Tầng 3: Controls (44px) ── */
   .player-controls-bottom {
-    display: flex;
+    display: flex !important;
     align-items: center;
-    justify-content: space-between;
-    padding: 2px 28px 6px;
+    justify-content: space-around;
+    padding: 0 24px;
+    height: 44px;
+    flex-shrink: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
   }
 
   .player-controls-bottom .pl-btn-modern {
     display: flex !important;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.55);
+    padding: 8px;
+    border-radius: 8px;
+    transition: color 0.15s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .player-controls-bottom .pl-btn-modern:active {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .player-controls-bottom .pl-btn-modern.active {
+    color: var(--accent-light);
   }
 }
 

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import Link from "next/link";
@@ -9,6 +9,14 @@ export const metadata: Metadata = {
     icons: {
         icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎵</text></svg>',
     },
+};
+
+// Khoá zoom trên mobile — không cho phép kéo dãn giao diện
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
 };
 
 const MusicLogoIcon = () => (
