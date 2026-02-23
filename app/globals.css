@@ -103,8 +103,18 @@ body {
 
 .logo-icon-wrapper {
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
+}
+
+.logo-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(239, 136, 187, 0.4);
+  box-shadow: 0 0 12px rgba(239, 136, 187, 0.4), 0 0 4px rgba(41, 24, 80, 0.6);
+  display: block;
 }
 
 .logo-svg {
