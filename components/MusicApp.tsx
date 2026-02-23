@@ -66,8 +66,10 @@ export default function MusicApp() {
     const query = searchParams?.get('q') || '';
     const playlistId = searchParams?.get('topic') || null;
 
-    const [allTracks, setAllTracks] = useState<Track[]>([]);
-    const [allPlaylists, setAllPlaylists] = useState<Playlist[]>([]);
+    // sidebarPlaylists: LUÔN có đủ tất cả playlists + trackCount để sidebar không bị thiếu
+    const [sidebarPlaylists, setSidebarPlaylists] = useState<Playlist[]>([]);
+    // displayTracks: chỉ là tracks đang hiển thị ở panel chính
+    const [displayTracks, setDisplayTracks] = useState<Track[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -79,15 +81,17 @@ export default function MusicApp() {
         setLoading(true); setError(null);
         try {
             if (playlistId) {
-                const [tracks, playlists] = await Promise.all([
-                    getTracksInPlaylist(playlistId), getPlaylists(),
+                // Fetch tracks cho playlist hiện tại + ALL playlists (với trackCount) song song
+                const [tracks, fullData] = await Promise.all([
+                    getTracksInPlaylist(playlistId),
+                    getAllTracks(),       // luôn lấy toàn bộ để sidebar đủ playlists
                 ]);
-                setAllTracks(tracks.map(driveTrackToTrack));
-                setAllPlaylists(playlists);
+                setDisplayTracks(tracks.map(driveTrackToTrack));
+                setSidebarPlaylists(fullData.playlists);  // có trackCount đầy đủ
             } else {
                 const { playlists, tracks } = await getAllTracks();
-                setAllTracks(tracks.map(driveTrackToTrack));
-                setAllPlaylists(playlists);
+                setDisplayTracks(tracks.map(driveTrackToTrack));
+                setSidebarPlaylists(playlists);
             }
         } catch (e: any) {
             setError(e.message || 'Failed to load from Google Drive');
@@ -99,23 +103,24 @@ export default function MusicApp() {
     useEffect(() => { loadData(); }, [loadData]);
 
     const filtered = query
-        ? allTracks.filter(t => {
+        ? displayTracks.filter(t => {
             const q = query.toLowerCase();
             return (t.title?.toLowerCase().includes(q)) ||
                 (t.performer?.toLowerCase().includes(q)) ||
                 ((t as any).name?.toLowerCase().includes(q));
         })
-        : allTracks;
+        : displayTracks;
 
-    const topicsWithCount = allPlaylists
+    // topicsWithCount luôn dùng sidebarPlaylists (có trackCount từ getAllTracks)
+    const topicsWithCount = sidebarPlaylists
         .map(pl => ({
             id: pl.id, name: pl.name,
-            trackCount: pl.trackCount ?? allTracks.filter(t => (t as any).playlist_id === pl.id).length,
+            trackCount: pl.trackCount ?? 0,
         }))
         .filter(t => t.trackCount > 0);
 
-    const currentPlaylist = playlistId ? allPlaylists.find(p => p.id === playlistId) : null;
-    const totalTracks = allPlaylists.reduce((s, p) => s + (p.trackCount ?? 0), 0) || allTracks.length;
+    const currentPlaylist = playlistId ? sidebarPlaylists.find(p => p.id === playlistId) : null;
+    const totalTracks = sidebarPlaylists.reduce((s: number, p: Playlist) => s + (p.trackCount ?? 0), 0) || displayTracks.length;
 
     return (
         <>
@@ -133,7 +138,7 @@ export default function MusicApp() {
                     </svg>
                 </button>
                 <div className="mobile-topbar-logo">
-                    <span className="logo-text" style={{ fontSize: '16px', fontWeight: '800' }}>BBM</span>
+                    <span className="logo-text" style={{ fontSize: '16px', fontWeight: '800' }}>zenjichen</span>
                 </div>
                 <div className="mobile-topbar-search">
                     <SearchInput initialQuery={query} compact />
@@ -171,7 +176,7 @@ export default function MusicApp() {
                             active={!playlistId && !query} total
                             onClick={() => setSidebarOpen(false)}
                         />
-                        {loading && !allPlaylists.length && (
+                        {loading && !sidebarPlaylists.length && (
                             <div className="sidebar-loading">
                                 <div className="sidebar-spin" />
                                 <span>Đang tải...</span>
@@ -253,7 +258,7 @@ export default function MusicApp() {
                     )}
 
                     {/* Empty */}
-                    {!loading && !error && allTracks.length === 0 && (
+                    {!loading && !error && displayTracks.length === 0 && (
                         <div className="empty-state">
                             <div className="empty-state-icon">📁</div>
                             <div className="empty-state-title">Chưa có nhạc</div>
