@@ -1145,71 +1145,52 @@ input[type="range"]::-moz-range-thumb {
    RESPONSIVE SYSTEM — Mobile / Tablet / Desktop
    ══════════════════════════════════════════════════════ */
 
-/* ── MOBILE (≤ 640px) — Fixed-scale layout ── */
+/* ── MOBILE (≤ 640px) ── */
 @media (max-width: 640px) {
 
   /* ── Tokens ── */
   :root {
     --topbar-h: 52px;
-    --player-h: 128px;
     /* progress(28) + info-row(56) + controls-row(44) */
+    --player-h: 128px;
     --navbar-h: 0px;
   }
 
-  /* ── Reset body / html ── */
-  html,
-  body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    /* Khoá scroll ở root */
-    overscroll-behavior: none;
-    /* Không bounce khi kéo ngoài */
-    background: #04040a;
+  /* Khoá font auto-resize của browser */
+  html {
     -webkit-text-size-adjust: 100%;
-    /* Khoá auto-resize font */
     text-size-adjust: 100%;
+  }
+
+  body {
+    background: #04040a;
+    /* Chỉ khoá horizontal scroll, giữ vertical */
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
   }
 
   .navbar {
     display: none !important;
   }
 
-  /* ── App shell: chia 3 vùng tuyệt đối ── */
-  .app-layout {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    /* dynamic viewport height — tính đúng cả notch/bar */
-    overflow: hidden;
-    position: fixed;
-    inset: 0;
-  }
-
-  /* ── Overlay background ── */
-  .global-player-bg,
-  .bg-mesh {
-    position: fixed;
-    inset: 0;
-  }
-
-  /* ── Topbar (cố định 52px) ── */
+  /* ── Topbar (52px sticky) ── */
   .mobile-topbar {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 0 14px;
     height: var(--topbar-h);
-    flex-shrink: 0;
     background: rgba(6, 6, 16, 0.99);
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
-    box-sizing: border-box;
+    position: sticky;
+    top: 0;
     z-index: 400;
-    position: relative;
+    box-sizing: border-box;
   }
 
+  /* Nút hamburger */
   .mobile-lib-btn {
     background: rgba(124, 58, 237, 0.15);
     color: var(--accent-light);
@@ -1224,13 +1205,13 @@ input[type="range"]::-moz-range-thumb {
     padding: 0;
     cursor: pointer;
     flex-shrink: 0;
-    transition: background 0.15s;
+    transition: background 0.15s, transform 0.1s;
     -webkit-tap-highlight-color: transparent;
   }
 
   .mobile-lib-btn:active {
     background: rgba(124, 58, 237, 0.32);
-    transform: scale(0.94);
+    transform: scale(0.92);
   }
 
   .mobile-topbar-logo {
@@ -1242,27 +1223,7 @@ input[type="range"]::-moz-range-thumb {
     min-width: 0;
   }
 
-  /* ── Main content (scroll area) ── */
-  .main-content {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    overscroll-behavior-y: contain;
-    -webkit-overflow-scrolling: touch;
-    min-height: 0;
-    /* Quan trọng: flex item có thể co lại */
-  }
-
-  /* ── Main panel ── */
-  .main-panel {
-    padding: 12px 12px 20px !important;
-    margin-left: 0 !important;
-    background: none;
-    min-height: 100%;
-    box-sizing: border-box;
-  }
-
-  /* ── Panel header — gọn trên mobile ── */
+  /* ── Panel header gọn ── */
   .panel-header {
     padding: 0 0 10px;
   }
@@ -1303,12 +1264,19 @@ input[type="range"]::-moz-range-thumb {
     font-size: 12px;
   }
 
+  /* ── Main panel — padding-bottom để tránh bị player che ── */
+  .main-panel {
+    padding: 12px 12px calc(var(--player-h) + 20px) !important;
+    margin-left: 0 !important;
+    background: none;
+  }
+
   /* ── Track table header ẩn ── */
   .track-table-header {
     display: none;
   }
 
-  /* ── Track items — tỉ lệ cân đối ── */
+  /* ── Track items ── */
   .track-list {
     padding: 2px 0;
   }
@@ -1328,7 +1296,6 @@ input[type="range"]::-moz-range-thumb {
     transform: scale(0.99) !important;
   }
 
-  /* Số thứ tự — nhỏ, mờ */
   .track-number {
     width: 18px;
     font-size: 10px;
@@ -1337,7 +1304,6 @@ input[type="range"]::-moz-range-thumb {
     flex-shrink: 0;
   }
 
-  /* Thumbnail 48×48 */
   .track-cover {
     width: 48px;
     height: 48px;
@@ -1383,7 +1349,6 @@ input[type="range"]::-moz-range-thumb {
     bottom: 0;
     width: 80vw;
     max-width: 290px;
-    background: #07071200;
     background: rgba(7, 7, 18, 0.99);
     z-index: 1100;
     transform: translateX(-100%);
@@ -1412,18 +1377,17 @@ input[type="range"]::-moz-range-thumb {
     z-index: 1050;
   }
 
-  /* ── Player Container (cố định dưới cùng) ── */
+  /* ── Player: FIXED ở dưới (Player nằm trong main-content, không phải sibling) ── */
   .player-container {
-    position: relative;
-    /* Nằm trong flex column của app-layout */
-    flex-shrink: 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     z-index: 1000;
-    bottom: auto;
-    left: auto;
-    right: auto;
+    padding: 0;
   }
 
-  /* ── Player Bar: layout 3 tầng ──
+  /* ── Player Bar: 3 tầng rõ ràng ──
      Tầng 1 (28px): progress bar + timestamps
      Tầng 2 (56px): cover + title/artist + play btn
      Tầng 3 (44px): shuffle / prev / next / repeat
@@ -1442,7 +1406,7 @@ input[type="range"]::-moz-range-thumb {
     overflow: hidden;
   }
 
-  /* ── Tầng 1: Progress + time (28px) ── */
+  /* Tầng 1: Progress + timestamps (28px) */
   .pb-wrap {
     padding: 8px 16px 0;
     flex-shrink: 0;
@@ -1456,7 +1420,6 @@ input[type="range"]::-moz-range-thumb {
     height: 3px;
     border-radius: 3px;
     padding: 6px 0;
-    /* Hit area dọc */
     margin: -6px 0;
     box-sizing: content-box;
     background: rgba(255, 255, 255, 0.1);
@@ -1484,7 +1447,7 @@ input[type="range"]::-moz-range-thumb {
     letter-spacing: 0.02em;
   }
 
-  /* ── Tầng 2: Info + Play (56px) ── */
+  /* Tầng 2: Cover + Title/Artist + Play button (56px) */
   .player-inner {
     padding: 0 14px;
     height: 56px;
@@ -1538,7 +1501,7 @@ input[type="range"]::-moz-range-thumb {
     text-overflow: ellipsis;
   }
 
-  /* Chỉ play button trong player-center ở hàng info */
+  /* Chỉ play button trong player-center ở tầng 2 */
   .player-center {
     width: auto;
     flex-shrink: 0;
@@ -1551,7 +1514,7 @@ input[type="range"]::-moz-range-thumb {
     width: auto;
   }
 
-  /* Ẩn tất cả ngoài play button ở hàng info */
+  /* Ẩn mọi btn trong row chính, trừ play */
   .player-buttons-modern .pl-btn-modern {
     display: none !important;
   }
@@ -1570,12 +1533,12 @@ input[type="range"]::-moz-range-thumb {
     display: none;
   }
 
-  /* ── Tầng 3: Controls (44px) ── */
+  /* Tầng 3: Controls navigation (44px) */
   .player-controls-bottom {
     display: flex !important;
     align-items: center;
     justify-content: space-around;
-    padding: 0 24px;
+    padding: 0 20px;
     height: 44px;
     flex-shrink: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.04);
@@ -1598,98 +1561,96 @@ input[type="range"]::-moz-range-thumb {
   .player-controls-bottom .pl-btn-modern.active {
     color: var(--accent-light);
   }
-}
 
 
+  /* ── TABLET (641px – 1024px) ── */
+  @media (min-width: 641px) and (max-width: 1024px) {
 
+    /* Hide mobile topbar, show desktop elements normally */
+    .mobile-topbar {
+      display: none;
+    }
 
-/* ── TABLET (641px – 1024px) ── */
-@media (min-width: 641px) and (max-width: 1024px) {
+    .panel-floating-lib-btn {
+      display: flex;
+    }
 
-  /* Hide mobile topbar, show desktop elements normally */
-  .mobile-topbar {
-    display: none;
+    /* Sidebar slides, slightly narrower */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 240px;
+      z-index: 1000;
+      transform: translateX(-100%);
+      transition: transform 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+      background: #060614;
+      border-right: 1px solid var(--border);
+    }
+
+    .sidebar-open {
+      transform: translateX(0);
+      box-shadow: 20px 0 60px rgba(0, 0, 0, 0.7);
+    }
+
+    .sidebar-collapsed {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 950;
+    }
+
+    .main-panel {
+      padding: 24px 22px 20px;
+      margin-left: 0 !important;
+    }
+
+    .panel-title {
+      font-size: 26px;
+    }
+
+    .panel-playlist-title {
+      font-size: 28px;
+    }
+
+    .player-right {
+      width: auto;
+      min-width: 120px;
+    }
   }
 
-  .panel-floating-lib-btn {
-    display: flex;
-  }
+  /* ── DESKTOP (≥ 1025px) ── */
+  @media (min-width: 1025px) {
 
-  /* Sidebar slides, slightly narrower */
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 240px;
-    z-index: 1000;
-    transform: translateX(-100%);
-    transition: transform 0.35s cubic-bezier(0.19, 1, 0.22, 1);
-    background: #060614;
-    border-right: 1px solid var(--border);
-  }
+    /* Mobile topbar is never shown */
+    .mobile-topbar {
+      display: none !important;
+    }
 
-  .sidebar-open {
-    transform: translateX(0);
-    box-shadow: 20px 0 60px rgba(0, 0, 0, 0.7);
-  }
+    /* Sidebar always visible inline (not overlay) */
+    .sidebar {
+      position: sticky;
+      top: 0;
+      transform: none !important;
+      box-shadow: none !important;
+      width: var(--sidebar-w);
+      height: calc(100vh - var(--player-h) - var(--navbar-h));
+    }
 
-  .sidebar-collapsed {
-    transform: translateX(-100%);
-  }
+    .sidebar-collapsed {
+      width: 0 !important;
+      border-right: none;
+      overflow: hidden;
+    }
 
-  .sidebar-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    z-index: 950;
-  }
-
-  .main-panel {
-    padding: 24px 22px 20px;
-    margin-left: 0 !important;
-  }
-
-  .panel-title {
-    font-size: 26px;
-  }
-
-  .panel-playlist-title {
-    font-size: 28px;
-  }
-
-  .player-right {
-    width: auto;
-    min-width: 120px;
-  }
-}
-
-/* ── DESKTOP (≥ 1025px) ── */
-@media (min-width: 1025px) {
-
-  /* Mobile topbar is never shown */
-  .mobile-topbar {
-    display: none !important;
-  }
-
-  /* Sidebar always visible inline (not overlay) */
-  .sidebar {
-    position: sticky;
-    top: 0;
-    transform: none !important;
-    box-shadow: none !important;
-    width: var(--sidebar-w);
-    height: calc(100vh - var(--player-h) - var(--navbar-h));
-  }
-
-  .sidebar-collapsed {
-    width: 0 !important;
-    border-right: none;
-    overflow: hidden;
-  }
-
-  .sidebar-backdrop {
-    display: none !important;
+    .sidebar-backdrop {
+      display: none !important;
+    }
   }
 }
