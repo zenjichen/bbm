@@ -1160,13 +1160,44 @@ input[type="range"]::-moz-range-thumb {
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    height: 100%;
   }
 
   body {
     background: #04040a;
-    /* Chỉ khoá horizontal scroll, giữ vertical */
+    /* Cho phép scroll dọc, khoá ngang */
     overflow-x: hidden;
+    overflow-y: auto;
     overscroll-behavior-x: none;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* app-layout: height tự nhiên, không cố định */
+  .app-layout {
+    height: auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  /* main-content: không scroll riêng, để body scroll */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0;
+    overflow: visible;
+    height: auto;
+  }
+
+  /* book-layout: natural height */
+  .book-layout {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: auto;
   }
 
   .navbar {
@@ -1264,11 +1295,16 @@ input[type="range"]::-moz-range-thumb {
     font-size: 12px;
   }
 
-  /* ── Main panel — padding-bottom để tránh bị player che ── */
+  /* ── Main panel — overflow visible, body scroll, padding tránh player ── */
   .main-panel {
-    padding: 12px 12px calc(var(--player-h) + 20px) !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    /* Padding dưới đủ lớn để bài cuối không bị player che */
+    padding: 12px 12px calc(var(--player-h) + 32px) !important;
     margin-left: 0 !important;
     background: none;
+    height: auto !important;
+    min-height: auto !important;
   }
 
   /* ── Track table header ẩn ── */
