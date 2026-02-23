@@ -76,52 +76,164 @@ function ProgressBar({ progress, seekTo, currentTime, totalDuration }: {
     currentTime: number; totalDuration: number;
 }) {
     const barRef = useRef<HTMLDivElement>(null);
-    const dragging = useRef(false);
-    const [active, setActive] = useState(false);
-    const [tip, setTip] = useState<{ x: number; time: string } | null>(null);
+    const fillRef = useRef<HTMLDivElement>(null);
+    const thumbRef = useRef<HTMLDivElement>(null);
+    const tipRef = useRef<HTMLDivElement>(null);
+    const timesCurrentRef = useRef<HTMLSpanElement>(null);
 
-    const pct = (cx: number) => {
+    const dragging = useRef(false);
+    const rafId = useRef<number>(0);
+    const dragPct = useRef(progress);
+
+    // Tính % từ clientX
+    const getPct = (cx: number) => {
         const r = barRef.current?.getBoundingClientRect();
         if (!r) return 0;
         return Math.max(0, Math.min(100, ((cx - r.left) / r.width) * 100));
     };
 
-    const onDown = (e: React.MouseEvent) => { dragging.current = true; setActive(true); seekTo(pct(e.clientX)); };
-    const onMove = (e: React.MouseEvent) => {
-        const p = pct(e.clientX);
-        setTip({ x: p, time: fmt((p / 100) * totalDuration) });
-        if (dragging.current) seekTo(p);
-    };
-    const onUp = (e: React.MouseEvent) => { if (dragging.current) { seekTo(pct(e.clientX)); dragging.current = false; setActive(false); } };
-    const onLeave = () => setTip(null);
-    const onTouch = (e: React.TouchEvent) => { dragging.current = true; seekTo(pct(e.touches[0].clientX)); };
-    const onTouchMove = (e: React.TouchEvent) => { if (dragging.current) { e.preventDefault(); seekTo(pct(e.touches[0].clientX)); } };
-    const onTouchEnd = () => { dragging.current = false; setActive(false); };
+    // Cập nhật DOM trực tiếp (KHÔNG re-render React) — zero lag
+    const applyPct = useCallback((p: number) => {
+        if (fillRef.current) fillRef.current.style.width = `${p}%`;
+        if (thumbRef.current) thumbRef.current.style.left = `${p}%`;
+        if (tipRef.current) {
+            tipRef.current.style.left = `${p}%`;
+            tipRef.current.textContent = fmt((p / 100) * totalDuration);
+            tipRef.current.style.opacity = '1';
+        }
+        if (timesCurrentRef.current) {
+            timesCurrentRef.current.textContent = fmt((p / 100) * totalDuration);
+        }
+    }, [totalDuration]);
 
+    // ── Mouse events ──────────────────────────────────────────────
+    const [active, setActive] = useState(false);
+
+    const onMouseDown = (e: React.MouseEvent) => {
+        dragging.current = true;
+        setActive(true);
+        dragPct.current = getPct(e.clientX);
+        applyPct(dragPct.current);
+    };
+    const onMouseMove = (e: React.MouseEvent) => {
+        const p = getPct(e.clientX);
+        if (tipRef.current) {
+            tipRef.current.style.left = `${p}%`;
+            tipRef.current.textContent = fmt((p / 100) * totalDuration);
+            tipRef.current.style.opacity = '1';
+        }
+        if (dragging.current) {
+            dragPct.current = p;
+            applyPct(p);
+        }
+    };
+    const onMouseUp = (e: React.MouseEvent) => {
+        if (dragging.current) {
+            seekTo(getPct(e.clientX));
+            dragging.current = false;
+            setActive(false);
+        }
+    };
+    const onMouseLeave = () => {
+        if (tipRef.current) tipRef.current.style.opacity = '0';
+    };
+
+    // ── Touch events — native listeners để dùng passive:false ────
     useEffect(() => {
-        const up = () => { dragging.current = false; setActive(false); };
-        const mv = (e: MouseEvent) => { if (dragging.current) seekTo(pct(e.clientX)); };
-        window.addEventListener('mouseup', up);
-        window.addEventListener('mousemove', mv);
-        return () => { window.removeEventListener('mouseup', up); window.removeEventListener('mousemove', mv); };
-    }, [seekTo]);
+        const el = barRef.current;
+        if (!el) return;
+
+        const onTouchStart = (e: TouchEvent) => {
+            e.preventDefault();
+            dragging.current = true;
+            setActive(true);
+            dragPct.current = getPct(e.touches[0].clientX);
+            applyPct(dragPct.current);
+            // Hiện thumb ngay lập tức
+            if (thumbRef.current) thumbRef.current.style.opacity = '1';
+        };
+
+        const onTouchMove = (e: TouchEvent) => {
+            if (!dragging.current) return;
+            e.preventDefault();
+            const p = getPct(e.touches[0].clientX);
+            dragPct.current = p;
+            cancelAnimationFrame(rafId.current);
+            rafId.current = requestAnimationFrame(() => applyPct(p));
+        };
+
+        const onTouchEnd = () => {
+            if (!dragging.current) return;
+            dragging.current = false;
+            setActive(false);
+            if (thumbRef.current) thumbRef.current.style.opacity = '';
+            if (tipRef.current) tipRef.current.style.opacity = '0';
+            // Seek thật sự chỉ khi nhả tay
+            seekTo(dragPct.current);
+        };
+
+        // passive: false để e.preventDefault() hoạt động (ngăn page scroll)
+        el.addEventListener('touchstart', onTouchStart, { passive: false });
+        el.addEventListener('touchmove', onTouchMove, { passive: false });
+        el.addEventListener('touchend', onTouchEnd, { passive: true });
+        el.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+        return () => {
+            el.removeEventListener('touchstart', onTouchStart);
+            el.removeEventListener('touchmove', onTouchMove);
+            el.removeEventListener('touchend', onTouchEnd);
+            el.removeEventListener('touchcancel', onTouchEnd);
+            cancelAnimationFrame(rafId.current);
+        };
+    }, [applyPct, seekTo]);
+
+    // ── Global mouse up (khi kéo ra ngoài bar) ───────────────────
+    useEffect(() => {
+        const onUp = (e: MouseEvent) => {
+            if (dragging.current) {
+                seekTo(getPct(e.clientX));
+                dragging.current = false;
+                setActive(false);
+            }
+        };
+        const onMove = (e: MouseEvent) => {
+            if (dragging.current) {
+                dragPct.current = getPct(e.clientX);
+                applyPct(dragPct.current);
+            }
+        };
+        window.addEventListener('mouseup', onUp);
+        window.addEventListener('mousemove', onMove);
+        return () => {
+            window.removeEventListener('mouseup', onUp);
+            window.removeEventListener('mousemove', onMove);
+        };
+    }, [applyPct, seekTo]);
 
     return (
         <div className="pb-wrap">
+            {/* Hit area lớn hơn để dễ chạm trên mobile */}
             <div
                 ref={barRef}
                 className={`pb-track ${active ? 'pb-active' : ''}`}
-                onMouseDown={onDown} onMouseMove={onMove} onMouseUp={onUp}
-                onMouseLeave={onLeave} onTouchStart={onTouch}
-                onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+                onMouseDown={onMouseDown}
+                onMouseMove={onMouseMove}
+                onMouseUp={onMouseUp}
+                onMouseLeave={onMouseLeave}
+                style={{ touchAction: 'none' }}
             >
-                <div className="pb-fill" style={{ width: `${progress}%` }}>
+                <div ref={fillRef} className="pb-fill" style={{ width: `${progress}%` }}>
                     <div className="pb-glow" />
                 </div>
-                <div className="pb-thumb" style={{ left: `${progress}%` }} />
-                {tip && <div className="pb-tip" style={{ left: `${tip.x}%` }}>{tip.time}</div>}
+                <div ref={thumbRef} className="pb-thumb" style={{ left: `${progress}%` }} />
+                <div ref={tipRef} className="pb-tip" style={{ opacity: 0, left: `${progress}%` }}>
+                    {fmt((progress / 100) * totalDuration)}
+                </div>
             </div>
-            <div className="pb-times"><span>{fmt(currentTime)}</span><span>{fmt(totalDuration)}</span></div>
+            <div className="pb-times">
+                <span ref={timesCurrentRef}>{fmt(currentTime)}</span>
+                <span>{fmt(totalDuration)}</span>
+            </div>
         </div>
     );
 }

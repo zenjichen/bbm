@@ -1453,17 +1453,22 @@ input[type="range"]::-moz-range-thumb {
   }
 
   .pb-track {
-    height: 3px;
-    border-radius: 3px;
-    padding: 6px 0;
-    margin: -6px 0;
+    height: 4px;
+    border-radius: 4px;
+    /* Hit area kéo rộng hơn nhiều cho mobile — dễ chạm */
+    padding: 16px 0;
+    margin: -16px 0;
     box-sizing: content-box;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.12);
+    /* Quan trọng: ngăn browser scroll khi đang kéo thanh */
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
   }
 
   .pb-track:hover,
   .pb-track.pb-active {
-    height: 5px;
+    height: 6px;
   }
 
   .pb-fill {
@@ -1471,8 +1476,17 @@ input[type="range"]::-moz-range-thumb {
   }
 
   .pb-thumb {
-    width: 12px;
-    height: 12px;
+    width: 18px;
+    height: 18px;
+    /* Luôn hiển thị trên mobile để dễ nhận biết điểm kéo */
+    opacity: 0.85;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.35), 0 2px 8px rgba(0, 0, 0, 0.6);
+    transition: opacity 0.1s, transform 0.1s;
+  }
+
+  .pb-track.pb-active .pb-thumb {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.3);
   }
 
   .pb-times {
