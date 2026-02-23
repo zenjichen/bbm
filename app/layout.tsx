@@ -3,12 +3,11 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import Link from "next/link";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 export const metadata: Metadata = {
     title: "zenjichen music box",
     description: "Stream your personal music collection from Google Drive",
-    icons: {
-        icon: '/icon.jpg',
-    },
 };
 
 // Khoá zoom trên mobile — không cho phép kéo dãn giao diện
@@ -22,7 +21,7 @@ export const viewport: Viewport = {
 const MusicLogoIcon = () => (
     <div className="logo-icon-wrapper">
         <img
-            src="/icon.jpg"
+            src={`${basePath}/icon.jpg`}
             alt="zenjichen music box"
             className="logo-img"
         />
@@ -33,6 +32,12 @@ const MusicLogoIcon = () => (
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="vi">
+            <head>
+                {/* Favicon với đúng basePath — tránh lỗi path trên GitHub Pages /bbm */}
+                <link rel="icon" href={`${basePath}/icon.jpg`} type="image/jpeg" />
+                <link rel="shortcut icon" href={`${basePath}/icon.jpg`} type="image/jpeg" />
+                <link rel="apple-touch-icon" href={`${basePath}/icon.jpg`} />
+            </head>
             <body>
                 {/* Global Background Layer for Now Playing blur */}
                 <div className="global-player-bg" aria-hidden="true" />
