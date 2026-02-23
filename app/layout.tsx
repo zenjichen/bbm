@@ -4,7 +4,7 @@ import Providers from "@/components/Providers";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-    title: "BBM Music — Personal Music Stream",
+    title: "zenjichen music box",
     description: "Stream your personal music collection from Google Drive",
     icons: {
         icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎵</text></svg>',
@@ -43,7 +43,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                             <Link href="/" className="logo">
                                 <MusicLogoIcon />
                                 <div className="logo-text-wrapper">
-                                    <span className="logo-text">BBM Music</span>
+                                    <span className="logo-text">zenjichen music box</span>
                                     <div className="logo-glimmer"></div>
                                 </div>
                             </Link>

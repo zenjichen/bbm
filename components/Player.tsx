@@ -285,7 +285,7 @@ export default function Player() {
                         </div>
                         <div className="player-text-premium" onClick={scrollToCurrent}>
                             <div className="player-title-full">{currentTrack?.title || "Sẵn sàng phát nhạc"}</div>
-                            <div className="player-artist-premium">{currentTrack?.performer || "Chọn một bài hát để bắt đầu"}</div>
+                            <div className="player-artist-premium">{currentTrack ? (currentTrack.performer || "") : "Chọn một bài hát để bắt đầu"}</div>
                         </div>
                     </div>
 
